@@ -19,6 +19,10 @@
     <properties>
         <!-- Build -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Versions -->
+        <com.spotify.dockerfile-maven.version>1.4.10</com.spotify.dockerfile-maven.version>
+        <org.springframework.cloud.version>Greenwich.SR2</org.springframework.cloud.version>
+        <ar.edu.itba.cep.commons.version>0.0.5-RELEASE</ar.edu.itba.cep.commons.version>
     </properties>
 
     <modules>
@@ -26,6 +30,25 @@
         <module>lti-service-core</module>
         <module>lti-service-adapters</module>
     </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${org.springframework.cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>ar.edu.itba.cep</groupId>
+                <artifactId>commons-bom</artifactId>
+                <version>${ar.edu.itba.cep.commons.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <profiles>
         <profile>
@@ -54,9 +77,49 @@
         </profile>
 
         <profile>
-            <id>travis-ci</id>
+            <id>ci-cd</id>
+        </profile>
+
+        <profile>
+            <id>docker-build</id>
         </profile>
     </profiles>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>com.spotify</groupId>
+                    <artifactId>dockerfile-maven-plugin</artifactId>
+                    <version>${com.spotify.dockerfile-maven.version}</version>
+                    <configuration>
+                        <skip>true</skip>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <repositories>
+        <repository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>bintray-coding-eval-platform-maven</id>
+            <name>bintray</name>
+            <url>https://dl.bintray.com/coding-eval-platform/maven</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>bintray-coding-eval-platform-maven</id>
+            <name>bintray-plugins</name>
+            <url>https://dl.bintray.com/coding-eval-platform/maven</url>
+        </pluginRepository>
+    </pluginRepositories>
 
     <licenses>
         <license>

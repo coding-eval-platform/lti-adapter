@@ -50,9 +50,72 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
     </dependencies>
 
+    <profiles>
+        <profile>
+            <id>docker-build</id>
+            <properties>
+                <!-- Timestamp format to be included in Docker image's tag -->
+                <maven.build.timestamp.format>yyyy-MM-dd'T'HH-mm-ss</maven.build.timestamp.format>
+                <!-- Docker Image name -->
+                <docker.image.prefix>itbacep</docker.image.prefix>
+                <docker.image.name>${project.parent.artifactId}</docker.image.name>
+                <docker.image.tag-id>${maven.build.timestamp}</docker.image.tag-id>
+                <docker.image.tag>${project.parent.version}-${docker.image.tag-id}</docker.image.tag>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.spotify</groupId>
+                        <artifactId>dockerfile-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>default-dockerfile</id>
+                                <goals>
+                                    <goal>build</goal>
+                                    <goal>tag</goal>
+                                    <goal>push</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <repository>${docker.image.prefix}/${docker.image.name}</repository>
+                            <tag>${docker.image.tag}</tag>
+                            <skip>false</skip>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>com.spotify</groupId>
+                    <artifactId>dockerfile-maven-plugin</artifactId>
+                    <configuration>
+                        <buildArgs>
+                            <JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
+                        </buildArgs>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

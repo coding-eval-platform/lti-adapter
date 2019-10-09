@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>ar.edu.itba.cep</groupId>
+        <artifactId>lti-service</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>lti-service-application</artifactId>
+    <name>${project.groupId}:${project.artifactId}</name>
+    <packaging>jar</packaging>
+
+    <properties>
+        <!-- Encoding -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Bootstrap class -->
+        <bootstrapClass>ar.edu.itba.cep.lti_service.application.Application</bootstrapClass>
+    </properties>
+
+    <dependencies>
+        <!-- Core -->
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>lti-service-domain</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Adapters -->
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>lti-service-spring-data-adapter</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>lti-service-rest-adapter</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Third party libraries -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>${bootstrapClass}</mainClass>
+                    <layout>JAR</layout>
+                    <executable>true</executable>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

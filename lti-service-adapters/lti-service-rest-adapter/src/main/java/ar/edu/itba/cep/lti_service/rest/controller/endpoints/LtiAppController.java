@@ -12,19 +12,19 @@ import javax.ws.rs.core.Response;
 /**
  * Controller in charge of providing endpoints to allow LTI integration.
  */
-@Path("lti")
+@Path("lti/app")
 @Produces(MediaType.APPLICATION_JSON)
 @JerseyController
-public class LtiController {
+public class LtiAppController {
 
     @GET
-    @Path("oidc")
+    @Path("init-login")
     public Response login() {
         return Response.noContent().build();
     }
 
     @POST
-    @Path("start-exam")
+    @Path("take-exam")
     public Response startExam() {
         return Response.noContent().build();
     }

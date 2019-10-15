@@ -1,31 +1,60 @@
 # Default Configuration
 
 spring:
-    profiles:
-        active: dev
+  profiles:
+    active: dev
 
-    main:
-        banner-mode: "off"
+  main:
+    banner-mode: "off"
+
+  jersey:
+    servlet:
+      load-on-startup: 1
+
+
+server:
+  port: 8000
+  error:
+    include-stacktrace: never
+    whitelabel:
+      enabled: false
+    include-exception: false
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    register-with-eureka: true
+    fetch-registry: true
 
 ---
 # Configuration for Development Environment
 
 spring:
-    profiles:
-        - dev
-        - development
+  profiles:
+    - dev
+    - development
+
+eureka:
+  client:
+    service-url:
+      default-zone: "http://localhost:8761/eureka/"
 
 ---
 # Configuration for Staging Environment
 
 spring:
-    profiles:
-        - staging
+  profiles:
+    - staging
 
 ---
 # Configuration for Production Environment
 
 spring:
-    profiles:
-        - prod
-        - production
+  profiles:
+    - prod
+    - production

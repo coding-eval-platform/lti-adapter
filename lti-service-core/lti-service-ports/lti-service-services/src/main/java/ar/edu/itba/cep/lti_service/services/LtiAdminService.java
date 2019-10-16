@@ -77,13 +77,15 @@ public interface LtiAdminService {
      * @param jwksEndpoint               Endpoint at which the platform's public keys can be found.
      * @return The created {@link ToolDeployment}.
      * @throws IllegalArgumentException In case any value is not a valid one.
+     * @throws UniqueViolationException If a {@link ToolDeployment} already exists for the given
+     *                                  {@code deploymentId}, {@code clientId} and {@code issuer}.
      */
     ToolDeployment registerToolDeployment(
             final String deploymentId,
             final String clientId,
             final String issuer,
             final String oidcAuthenticationEndpoint,
-            final String jwksEndpoint) throws IllegalArgumentException;
+            final String jwksEndpoint) throws IllegalArgumentException, UniqueViolationException;
 
     /**
      * Removes the {@link ToolDeployment} with the given {@code id}
@@ -112,10 +114,9 @@ public interface LtiAdminService {
             throws IllegalArgumentException, UniqueViolationException;
 
     /**
-     * Removes the {@link FrontendDeployment}.
+     * Removes the current {@link FrontendDeployment}.
      *
-     * @param id The id of the {@link FrontendDeployment} to be removed.
      * @apiNote This is an idempotent operation.
      */
-    void unregisterFrontend(final UUID id);
+    void unregisterFrontend();
 }

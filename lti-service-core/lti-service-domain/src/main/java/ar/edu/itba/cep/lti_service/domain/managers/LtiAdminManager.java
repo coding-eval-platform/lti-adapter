@@ -1,4 +1,4 @@
-package ar.edu.itba.cep.lti_service.domain;
+package ar.edu.itba.cep.lti_service.domain.managers;
 
 import ar.edu.itba.cep.lti_service.models.admin.FrontendDeployment;
 import ar.edu.itba.cep.lti_service.models.admin.ToolDeployment;

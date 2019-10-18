@@ -1,5 +1,6 @@
 package ar.edu.itba.cep.lti_service.domain;
 
+import ar.edu.itba.cep.lti_service.domain.managers.LtiAdminManager;
 import ar.edu.itba.cep.lti_service.models.admin.FrontendDeployment;
 import ar.edu.itba.cep.lti_service.models.admin.ToolDeployment;
 import ar.edu.itba.cep.lti_service.repositories.FrontendDeploymentRepository;
@@ -17,8 +18,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 
-import static ar.edu.itba.cep.lti_service.models.admin.FrontendDeployment.EXAM_ID_VARIABLE;
-import static ar.edu.itba.cep.lti_service.models.admin.FrontendDeployment.JWT_VARIABLE;
+import static ar.edu.itba.cep.lti_service.models.admin.FrontendDeployment.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -302,7 +302,7 @@ public class LtiAdminManagerTest {
      */
     @Test
     void testFrontendDeploymentRegistration() {
-        final var examCreationUrl = examCreationUrl();
+        final var examCreationUrl = examCreationUrlTemplate();
         final var examTakingUrlTemplate = examTakingUrlTemplate();
 
         when(frontendDeploymentRepository.count()).thenReturn(0L);
@@ -317,7 +317,7 @@ public class LtiAdminManagerTest {
                 "Creating a FrontendDeployment is not working as expected",
                 () -> Assertions.assertEquals(
                         examCreationUrl,
-                        frontendDeployment.getExamCreationUrl(),
+                        frontendDeployment.getExamCreationUrlTemplate(),
                         "The Exam Creation url does not match"
                 ),
                 () -> Assertions.assertEquals(
@@ -331,7 +331,7 @@ public class LtiAdminManagerTest {
         verify(frontendDeploymentRepository, times(1)).count();
         verify(frontendDeploymentRepository, times(1)).save(
                 argThat(
-                        fd -> examCreationUrl.equals(fd.getExamCreationUrl())
+                        fd -> examCreationUrl.equals(fd.getExamCreationUrlTemplate())
                                 && examTakingUrlTemplate.equals(fd.getExamTakingUrlTemplate())
                 )
         );
@@ -349,7 +349,7 @@ public class LtiAdminManagerTest {
         Assertions.assertThrows(
                 UniqueViolationException.class,
                 () -> ltiAdminManager.registerFrontend(
-                        examCreationUrl(),
+                        examCreationUrlTemplate(),
                         examTakingUrlTemplate()
                 ),
                 "Registration of a Frontend Deployment (when there is already another frontend registered)" +
@@ -440,8 +440,8 @@ public class LtiAdminManagerTest {
     /**
      * @return A valid "exam creation" url.
      */
-    private static String examCreationUrl() {
-        return "https://" + Faker.instance().internet().domainName() + "/create-exam";
+    private static String examCreationUrlTemplate() {
+        return "https://" + Faker.instance().internet().domainName() + "/create-exam?state=" + STATE_VARIABLE;
     }
 
     /**

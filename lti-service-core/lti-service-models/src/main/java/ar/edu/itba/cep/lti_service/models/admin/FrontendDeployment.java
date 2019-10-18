@@ -19,12 +19,16 @@ import java.util.UUID;
 public class FrontendDeployment {
 
     /**
-     * The variable definition for exams' ids in an "exam creation" url template.
+     * The variable definition for states in an "exam creation" url template.
      */
-    public static final String EXAM_ID_VARIABLE = "${exam-id}";
+    public static final String STATE_VARIABLE = "${state}";
 
     /**
-     * The variable definition for JWTs in an "exam creation" url template.
+     * The variable definition for exams' ids in an "exam taking" url template.
+     */
+    public static final String EXAM_ID_VARIABLE = "${exam-id}";
+    /**
+     * The variable definition for JWTs in an "exam taking" url template.
      */
     public static final String JWT_VARIABLE = "${jwt}";
 
@@ -36,7 +40,7 @@ public class FrontendDeployment {
     /**
      * The url at which the "exam creation" form is deployed.
      */
-    private final String examCreationUrl;
+    private final String examCreationUrlTemplate;
     /**
      * The url template at which the "exam taking" feature is deployed.
      */
@@ -46,17 +50,17 @@ public class FrontendDeployment {
     /**
      * Constructor.
      *
-     * @param examCreationUrl       The url at which the "exam creation" form is deployed.
-     * @param examTakingUrlTemplate The url template at which the "exam taking" feature is deployed.
+     * @param examCreationUrlTemplate The url template which the "exam creation" form is deployed.
+     * @param examTakingUrlTemplate   The url template at which the "exam taking" feature is deployed.
      * @throws IllegalArgumentException In case any value is not a valid one.
      */
-    public FrontendDeployment(final String examCreationUrl, final String examTakingUrlTemplate)
+    public FrontendDeployment(final String examCreationUrlTemplate, final String examTakingUrlTemplate)
             throws IllegalArgumentException {
-        assertExamCreationUrl(examCreationUrl);
+        assertExamCreationUrlTemplate(examCreationUrlTemplate);
         assertExamTakingUrlTemplate(examTakingUrlTemplate);
 
         this.id = null;
-        this.examCreationUrl = examCreationUrl;
+        this.examCreationUrlTemplate = examCreationUrlTemplate;
         this.examTakingUrlTemplate = examTakingUrlTemplate;
     }
 
@@ -66,13 +70,17 @@ public class FrontendDeployment {
     // ================================
 
     /**
-     * Asserts that the given {@code examCreationUrl} is valid.
+     * Asserts that the given {@code examCreationUrlTemplate} is valid.
      *
-     * @param examCreationUrl The "exam creation" url to be checked.
-     * @throws IllegalArgumentException In case the "exam creation" url is not valid.
+     * @param examCreationUrlTemplate The "exam creation" url template to be checked.
+     * @throws IllegalArgumentException In case the "exam creation" url template is not valid.
      */
-    private static void assertExamCreationUrl(final String examCreationUrl) throws IllegalArgumentException {
-        Assert.notNull(examCreationUrl, "The \"exam creation\" url must not be null");
+    private static void assertExamCreationUrlTemplate(final String examCreationUrlTemplate) throws IllegalArgumentException {
+        Assert.notNull(examCreationUrlTemplate, "The \"exam creation\" url template must not be null");
+        Assert.isTrue(
+                examCreationUrlTemplate.contains(STATE_VARIABLE),
+                "The \"exam creation\" url template must contain the state variable (" + STATE_VARIABLE + ")"
+        );
     }
 
     /**

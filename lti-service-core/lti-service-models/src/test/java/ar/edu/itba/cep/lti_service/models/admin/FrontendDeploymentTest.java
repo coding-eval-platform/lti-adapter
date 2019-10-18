@@ -4,14 +4,14 @@ import com.github.javafaker.Faker;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import static ar.edu.itba.cep.lti_service.models.admin.FrontendDeployment.EXAM_ID_VARIABLE;
-import static ar.edu.itba.cep.lti_service.models.admin.FrontendDeployment.JWT_VARIABLE;
+import static ar.edu.itba.cep.lti_service.models.admin.FrontendDeployment.*;
 
 
 /**
  * Test class for {@link FrontendDeployment}.
  */
 class FrontendDeploymentTest {
+
 
     // ================================================================================================================
     // Acceptable arguments
@@ -22,7 +22,7 @@ class FrontendDeploymentTest {
      */
     @Test
     void testCreation() {
-        final var examCreationUrl = examCreationUrl();
+        final var examCreationUrl = validExamCreationUrlTemplate();
         final var examTakingUrlTemplate = validExamTakingUrlTemplate();
 
         final var frontendDeployment = new FrontendDeployment(
@@ -34,7 +34,7 @@ class FrontendDeploymentTest {
                 "Creating a FrontendDeployment is not working as expected",
                 () -> Assertions.assertEquals(
                         examCreationUrl,
-                        frontendDeployment.getExamCreationUrl(),
+                        frontendDeployment.getExamCreationUrlTemplate(),
                         "The Exam Creation url does not match"
                 ),
                 () -> Assertions.assertEquals(
@@ -64,6 +64,23 @@ class FrontendDeploymentTest {
     }
 
     /**
+     * Tests that an "exam creation" url template without the needed variables is not allowed
+     * when creating a {@link FrontendDeployment} (i.e throws an {@link IllegalArgumentException}).
+     */
+    @Test
+    void testMissingVariablesExamCreationUrlTemplate() {
+        Assertions.assertAll(
+                "Creating a FrontendDeployment with an \"Exam Creation\" url template" +
+                        " with missing variables is being allowed",
+                () -> Assertions.assertThrows(
+                        IllegalArgumentException.class,
+                        () -> new FrontendDeployment(basicExamCreationUrl(), validExamTakingUrlTemplate()),
+                        "It is allowed without the state variable"
+                )
+        );
+    }
+
+    /**
      * Tests that a null "exam taking" url template is not allowed when creating a {@link FrontendDeployment}
      * (i.e throws an {@link IllegalArgumentException}).
      */
@@ -71,7 +88,7 @@ class FrontendDeploymentTest {
     void testNullExamTakingUrlTemplate() {
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new FrontendDeployment(examCreationUrl(), null),
+                () -> new FrontendDeployment(validExamCreationUrlTemplate(), null),
                 "Creating a FrontendDeployment with a null \"Exam Taking\" url template is being allowed"
         );
     }
@@ -87,17 +104,23 @@ class FrontendDeploymentTest {
                         " with missing variables is being allowed",
                 () -> Assertions.assertThrows(
                         IllegalArgumentException.class,
-                        () -> new FrontendDeployment(examCreationUrl(), missingExamIdVariableExamTakingUrlTemplate()),
+                        () -> new FrontendDeployment(
+                                validExamCreationUrlTemplate(),
+                                missingExamIdVariableExamTakingUrlTemplate()
+                        ),
                         "It is allowed without the exam id variable"
                 ),
                 () -> Assertions.assertThrows(
                         IllegalArgumentException.class,
-                        () -> new FrontendDeployment(examCreationUrl(), missingJwtVariableExamTakingUrlTemplate()),
+                        () -> new FrontendDeployment(
+                                validExamCreationUrlTemplate(),
+                                missingJwtVariableExamTakingUrlTemplate()
+                        ),
                         "It is allowed without the jwt variable"
                 ),
                 () -> Assertions.assertThrows(
                         IllegalArgumentException.class,
-                        () -> new FrontendDeployment(examCreationUrl(), basicExamTakingUrl()),
+                        () -> new FrontendDeployment(validExamCreationUrlTemplate(), basicExamTakingUrl()),
                         "It is allowed without both the exam id and jwt variables"
                 )
         );
@@ -111,8 +134,8 @@ class FrontendDeploymentTest {
     /**
      * @return A valid "exam creation" url.
      */
-    private static String examCreationUrl() {
-        return "https://" + Faker.instance().internet().domainName() + "/create-exam";
+    private static String validExamCreationUrlTemplate() {
+        return basicExamCreationUrl() + "?state=" + STATE_VARIABLE;
     }
 
     /**
@@ -134,6 +157,13 @@ class FrontendDeploymentTest {
      */
     private static String missingJwtVariableExamTakingUrlTemplate() {
         return basicExamTakingUrl() + "/" + EXAM_ID_VARIABLE;
+    }
+
+    /**
+     * @return A basic "exam creation" url template (only schema, host, and a basic path).
+     */
+    private static String basicExamCreationUrl() {
+        return "https://" + Faker.instance().internet().domainName() + "/create-exam";
     }
 
     /**

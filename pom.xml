@@ -23,6 +23,8 @@
         <com.spotify.dockerfile-maven.version>1.4.10</com.spotify.dockerfile-maven.version>
         <org.springframework.cloud.version>Greenwich.SR2</org.springframework.cloud.version>
         <ar.edu.itba.cep.commons.version>0.0.5-RELEASE</ar.edu.itba.cep.commons.version>
+        <org.apache.commons.commons-text.version>1.8</org.apache.commons.commons-text.version>
+        <com.nimbusds.nimbus-jose-jwt.version>8.1</com.nimbusds.nimbus-jose-jwt.version>
     </properties>
 
     <modules>
@@ -46,6 +48,16 @@
                 <version>${ar.edu.itba.cep.commons.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-text</artifactId>
+                <version>${org.apache.commons.commons-text.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.nimbusds</groupId>
+                <artifactId>nimbus-jose-jwt</artifactId>
+                <version>${com.nimbusds.nimbus-jose-jwt.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

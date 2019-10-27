@@ -21,16 +21,24 @@ public class FrontendDeployment {
     /**
      * The variable definition for states in an "exam creation" url template.
      */
-    public static final String STATE_VARIABLE = "${state}";
+    public static final String STATE_VARIABLE = "${exam-creation-state}";
 
     /**
      * The variable definition for exams' ids in an "exam taking" url template.
      */
     public static final String EXAM_ID_VARIABLE = "${exam-id}";
     /**
-     * The variable definition for JWTs in an "exam taking" url template.
+     * The variable definition for access tokens in an "exam taking" url template.
      */
-    public static final String JWT_VARIABLE = "${jwt}";
+    public static final String ACCESS_TOKEN_VARIABLE = "${access-token}";
+    /**
+     * The variable definition for refresh tokens in an "exam taking" url template.
+     */
+    public static final String REFRESH_TOKEN_VARIABLE = "${refresh-token}";
+    /**
+     * The variable definition for token ids in an "exam taking" url template.
+     */
+    public static final String TOKEN_ID_VARIABLE = "${token-id}";
 
 
     /**
@@ -96,8 +104,16 @@ public class FrontendDeployment {
                 "The \"exam taking\" url template must contain the exam id variable (" + EXAM_ID_VARIABLE + ")"
         );
         Assert.isTrue(
-                examTakingUrlTemplate.contains(JWT_VARIABLE),
-                "The \"exam taking\" url template must contain the jwt variable (" + JWT_VARIABLE + ")"
+                examTakingUrlTemplate.contains(ACCESS_TOKEN_VARIABLE),
+                "The \"exam taking\" url template must contain the access token variable (" + ACCESS_TOKEN_VARIABLE + ")"
+        );
+        Assert.isTrue(
+                examTakingUrlTemplate.contains(REFRESH_TOKEN_VARIABLE),
+                "The \"exam taking\" url template must contain the refresh token variable (" + REFRESH_TOKEN_VARIABLE + ")"
+        );
+        Assert.isTrue(
+                examTakingUrlTemplate.contains(TOKEN_ID_VARIABLE),
+                "The \"exam taking\" url template must contain the token id variable (" + TOKEN_ID_VARIABLE + ")"
         );
     }
 }

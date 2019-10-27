@@ -1,11 +1,13 @@
 package ar.edu.itba.cep.lti_service.models.admin;
 
+import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.springframework.util.Assert;
 
+import java.security.PrivateKey;
 import java.util.UUID;
 
 /**
@@ -41,6 +43,14 @@ public class ToolDeployment {
      * Endpoint at which the platform's public keys can be found.
      */
     private final String jwksEndpoint;
+    /**
+     * The {@link PrivateKey} needed to sign messages sent to the platform.
+     */
+    private final PrivateKey privateKey;
+    /**
+     * The {@link SignatureAlgorithm}.
+     */
+    private final SignatureAlgorithm signatureAlgorithm;
 
 
     /**
@@ -51,6 +61,8 @@ public class ToolDeployment {
      * @param issuer                     The issuing authority.
      * @param oidcAuthenticationEndpoint Endpoint to which the user agent is redirected after a login initiation request.
      * @param jwksEndpoint               Endpoint at which the platform's public keys can be found.
+     * @param privateKey                 The {@link PrivateKey} needed to sign messages sent to the platform.
+     * @param signatureAlgorithm         The {@link SignatureAlgorithm}.
      * @throws IllegalArgumentException In case any value is not a valid one.
      */
     public ToolDeployment(
@@ -58,19 +70,25 @@ public class ToolDeployment {
             final String clientId,
             final String issuer,
             final String oidcAuthenticationEndpoint,
-            final String jwksEndpoint) throws IllegalArgumentException {
+            final String jwksEndpoint,
+            final PrivateKey privateKey,
+            final SignatureAlgorithm signatureAlgorithm) throws IllegalArgumentException {
         assertDeploymentId(deploymentId);
         assertClientId(clientId);
         assertIssuer(issuer);
         assertOidcAuthenticationEndpoint(oidcAuthenticationEndpoint);
         assertJwksEndpoint(jwksEndpoint);
+        assertPrivateKey(privateKey);
+        assertSignatureAlgorithm(signatureAlgorithm);
 
-        this.id = null;
+        this.id = UUID.randomUUID(); // TODO: change to null
         this.deploymentId = deploymentId;
         this.clientId = clientId;
         this.issuer = issuer;
         this.oidcAuthenticationEndpoint = oidcAuthenticationEndpoint;
         this.jwksEndpoint = jwksEndpoint;
+        this.privateKey = privateKey;
+        this.signatureAlgorithm = signatureAlgorithm;
     }
 
 
@@ -127,5 +145,26 @@ public class ToolDeployment {
      */
     private static void assertJwksEndpoint(final String jwksEndpoint) throws IllegalArgumentException {
         Assert.notNull(jwksEndpoint, "The jwks endpoint must not be null");
+    }
+
+    /**
+     * Asserts that the given {@code privateKey} is valid.
+     *
+     * @param privateKey The {@link PrivateKey} to be checked.
+     * @throws IllegalArgumentException In case the private key is not valid.
+     */
+    private static void assertPrivateKey(final PrivateKey privateKey) throws IllegalArgumentException {
+        Assert.notNull(privateKey, "The private key must not be null");
+    }
+
+    /**
+     * Asserts that the given {@code signatureAlgorithm} is valid.
+     *
+     * @param signatureAlgorithm The {@link PrivateKey} to be checked.
+     * @throws IllegalArgumentException In case the signatureAlgorithm is not valid.
+     */
+    private static void assertSignatureAlgorithm(final SignatureAlgorithm signatureAlgorithm)
+            throws IllegalArgumentException {
+        Assert.notNull(signatureAlgorithm, "The signatureAlgorithm must not be null");
     }
 }

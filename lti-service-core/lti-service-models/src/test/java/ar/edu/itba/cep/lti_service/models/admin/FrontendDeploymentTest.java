@@ -114,14 +114,25 @@ class FrontendDeploymentTest {
                         IllegalArgumentException.class,
                         () -> new FrontendDeployment(
                                 validExamCreationUrlTemplate(),
-                                missingJwtVariableExamTakingUrlTemplate()
+                                missingAccessTokenVariableExamTakingUrlTemplate()
                         ),
-                        "It is allowed without the jwt variable"
+                        "It is allowed without the access token variable"
                 ),
                 () -> Assertions.assertThrows(
                         IllegalArgumentException.class,
-                        () -> new FrontendDeployment(validExamCreationUrlTemplate(), basicExamTakingUrl()),
-                        "It is allowed without both the exam id and jwt variables"
+                        () -> new FrontendDeployment(
+                                validExamCreationUrlTemplate(),
+                                missingRefreshTokenVariableExamTakingUrlTemplate()
+                        ),
+                        "It is allowed without the refresh token variable"
+                ),
+                () -> Assertions.assertThrows(
+                        IllegalArgumentException.class,
+                        () -> new FrontendDeployment(
+                                validExamCreationUrlTemplate(),
+                                missingTokenIdVariableExamTakingUrlTemplate()
+                        ),
+                        "It is allowed without the token id variable"
                 )
         );
     }
@@ -142,21 +153,56 @@ class FrontendDeploymentTest {
      * @return A valid "exam taking" url template.
      */
     private static String validExamTakingUrlTemplate() {
-        return basicExamTakingUrl() + "/" + EXAM_ID_VARIABLE + "?token=" + JWT_VARIABLE;
+        return basicExamTakingUrl()
+                + "/" + EXAM_ID_VARIABLE
+                + "?access-token=" + ACCESS_TOKEN_VARIABLE
+                + "?refresh-token=" + REFRESH_TOKEN_VARIABLE
+                + "?token-id=" + TOKEN_ID_VARIABLE
+                ;
     }
 
     /**
      * @return An invalid "exam taking" url template (does not contain the exam id variable).
      */
     private static String missingExamIdVariableExamTakingUrlTemplate() {
-        return basicExamTakingUrl() + "?token=" + JWT_VARIABLE;
+        return basicExamTakingUrl()
+                + "?access-token=" + ACCESS_TOKEN_VARIABLE
+                + "?refresh-token=" + REFRESH_TOKEN_VARIABLE
+                + "?token-id=" + TOKEN_ID_VARIABLE
+                ;
     }
 
     /**
-     * @return An invalid "exam taking" url template (does not contain the jwt variable).
+     * @return An invalid "exam taking" url template (does not contain the access token variable).
      */
-    private static String missingJwtVariableExamTakingUrlTemplate() {
-        return basicExamTakingUrl() + "/" + EXAM_ID_VARIABLE;
+    private static String missingAccessTokenVariableExamTakingUrlTemplate() {
+        return basicExamTakingUrl()
+                + "/" + EXAM_ID_VARIABLE
+                + "?refresh-token=" + REFRESH_TOKEN_VARIABLE
+                + "?token-id=" + TOKEN_ID_VARIABLE
+                ;
+    }
+
+    /**
+     * @return An invalid "exam taking" url template (does not contain the access token variable).
+     */
+    private static String missingRefreshTokenVariableExamTakingUrlTemplate() {
+        return basicExamTakingUrl()
+                + "/" + EXAM_ID_VARIABLE
+                + "?access-token=" + ACCESS_TOKEN_VARIABLE
+                + "?token-id=" + TOKEN_ID_VARIABLE
+                ;
+    }
+
+    /**
+     * @return An invalid "exam taking" url template (does not contain the access token variable).
+     */
+    private static String missingTokenIdVariableExamTakingUrlTemplate() {
+        return basicExamTakingUrl()
+                + "/" + EXAM_ID_VARIABLE
+                + "?access-token=" + ACCESS_TOKEN_VARIABLE
+                + "?refresh-token=" + REFRESH_TOKEN_VARIABLE
+                ;
     }
 
     /**

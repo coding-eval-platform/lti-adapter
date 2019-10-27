@@ -5,10 +5,15 @@ import ar.edu.itba.cep.lti_service.models.admin.ToolDeployment;
 import ar.edu.itba.cep.lti_service.repositories.FrontendDeploymentRepository;
 import ar.edu.itba.cep.lti_service.repositories.ToolDeploymentRepository;
 import ar.edu.itba.cep.lti_service.services.LtiAdminService;
+import ar.edu.itba.cep.security.KeyHelper;
 import com.bellotapps.webapps_commons.errors.UniqueViolationError;
 import com.bellotapps.webapps_commons.exceptions.UniqueViolationException;
+import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.AllArgsConstructor;
 
+import java.security.KeyFactory;
+import java.security.PrivateKey;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,6 +35,10 @@ public class LtiAdminManager implements LtiAdminService {
      * A {@link FrontendDeploymentRepository}.
      */
     private final FrontendDeploymentRepository frontendDeploymentRepository;
+//    /**
+//     * A {@link KeyFactory} used to
+//     */
+//    private final KeyFactory keyFactory;
 
 
     // ================================================================================================================
@@ -68,7 +77,9 @@ public class LtiAdminManager implements LtiAdminService {
             final String clientId,
             final String issuer,
             final String oidcAuthenticationEndpoint,
-            final String jwksEndpoint) throws IllegalArgumentException, UniqueViolationException {
+            final String jwksEndpoint,
+            final PrivateKey privateKey,
+            final SignatureAlgorithm signatureAlgorithm) throws IllegalArgumentException, UniqueViolationException {
         // First check if there is a tool deployment for the given deploymentId, clientId and issuer.
         if (toolDeploymentRepository.exists(deploymentId, clientId, issuer)) {
             throw new UniqueViolationException(List.of(TOOL_DEPLOYMENT_ALREADY_EXISTS));
@@ -80,7 +91,9 @@ public class LtiAdminManager implements LtiAdminService {
                 clientId,
                 issuer,
                 oidcAuthenticationEndpoint,
-                jwksEndpoint
+                jwksEndpoint,
+                privateKey,
+                signatureAlgorithm
         );
         return toolDeploymentRepository.save(toolDeployment);
     }
@@ -91,6 +104,18 @@ public class LtiAdminManager implements LtiAdminService {
             toolDeploymentRepository.deleteById(id);
         }
     }
+
+//    /**
+//     * Builds a {@link PrivateKey} from the given {@code keyFactory} and {@code encoded} {@link String}
+//     * representation of the key.
+//     *
+//     * @param keyFactory The {@link KeyFactory} used to create the {@link PrivateKey}.
+//     * @param encoded The encoded form of the private key.
+//     * @return The created {@link PrivateKey}.
+//     */
+//    private static PrivateKey createPrivateKey(final KeyFactory keyFactory, final String encoded) {
+//        return KeyHelper.generateKey(keyFactory, encoded, PKCS8EncodedKeySpec::new, KeyFactory::generatePrivate);
+//    }
 
 
     // ================================================================================================================

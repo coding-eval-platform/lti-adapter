@@ -1,65 +1,45 @@
 package ar.edu.itba.cep.lti_service.domain.managers;
 
-import ar.edu.itba.cep.lti_service.domain.helpers.ExamCreationStateHelper;
-import ar.edu.itba.cep.lti_service.domain.helpers.LtiDeepLinkingHelper;
-import ar.edu.itba.cep.lti_service.domain.helpers.LtiMessageHelper;
-import ar.edu.itba.cep.lti_service.domain.helpers.LtiStateHelper;
-import ar.edu.itba.cep.lti_service.models.admin.FrontendDeployment;
+import ar.edu.itba.cep.lti.*;
+import ar.edu.itba.cep.lti_service.domain.helpers.*;
+import ar.edu.itba.cep.lti_service.domain.helpers.LtiDeepLinkingResponseHelper.LtiResourceLink;
+import ar.edu.itba.cep.lti_service.domain.helpers.LtiDeepLinkingResponseHelper.LtiResourceLink.LineItem;
+import ar.edu.itba.cep.lti_service.external_cep_services.evaluations_service.EvaluationsService;
+import ar.edu.itba.cep.lti_service.external_cep_services.evaluations_service.Exam;
 import ar.edu.itba.cep.lti_service.models.admin.ToolDeployment;
-import ar.edu.itba.cep.lti_service.models.app.LtiAuthenticationRequest;
-import ar.edu.itba.cep.lti_service.models.app.LtiAuthenticationResponse;
-import ar.edu.itba.cep.lti_service.models.app.LtiContent;
-import ar.edu.itba.cep.lti_service.models.app.LtiLoginInitiationRequest;
-import ar.edu.itba.cep.lti_service.repositories.FrontendDeploymentRepository;
 import ar.edu.itba.cep.lti_service.repositories.ToolDeploymentRepository;
-import ar.edu.itba.cep.lti_service.services.LtiAppService;
 import com.bellotapps.webapps_commons.exceptions.NoSuchEntityException;
-import com.bellotapps.webapps_commons.exceptions.NotImplementedException;
 import lombok.AllArgsConstructor;
-import org.apache.commons.text.StringSubstitutor;
-import org.springframework.util.Assert;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import static ar.edu.itba.cep.lti_service.domain.helpers.LtiDeepLinkingHelper.DeepLinkingContentType.LTI_RESOURCE_LINK;
+import static ar.edu.itba.cep.lti_service.domain.helpers.LtiDeepLinkingRequestHelper.DeepLinkingContentType.LTI_RESOURCE_LINK;
 
 /**
  * Manager in charge of providing services that allows LTI 1.3 interaction.
  */
 @AllArgsConstructor
-public class LtiAppManager implements LtiAppService {
+public class LtiAppManager implements LtiService {
 
-    /**
-     * a {@link ToolDeploymentRepository} used to retrieve {@link ToolDeployment}s according the received LTI message.
-     */
+    private static final String EXAM_ID_CUSTOM = "exam-id";
+
     private final ToolDeploymentRepository toolDeploymentRepository;
-    /**
-     * A {@link FrontendDeploymentRepository} used to retrieve the {@link FrontendDeployment}, in order to send
-     * the LTI content to the consumer.
-     */
-    private final FrontendDeploymentRepository frontendDeploymentRepository;
-    /**
-     * An {@link LtiStateHelper} used to encode/decode the state sent/received in the LTI messages.
-     */
     private final LtiStateHelper ltiStateHelper;
-    /**
-     * An {@link LtiMessageHelper} that helps with the task of handling LTI messages.
-     */
-    private final LtiMessageHelper ltiMessageHelper;
-    /**
-     * An {@link LtiDeepLinkingHelper} used to handle Deep Linking messages.
-     */
-    private final LtiDeepLinkingHelper ltiDeepLinkingHelper;
-    /**
-     * An {@link ExamCreationStateHelper} that helps with the task of "creating exams".
-     */
+    private final LtiMessageDeserializer ltiMessageDeserializer;
+    private final LtiMessageValidator ltiMessageValidator;
+    private final LtiDeepLinkingRequestHelper ltiDeepLinkingRequestHelper;
     private final ExamCreationStateHelper examCreationStateHelper;
+    private final LtiMessageSerializer ltiMessageSerializer;
+    private final LtiDeepLinkingResponseHelper ltiDeepLinkingResponseHelper;
+
+    private final EvaluationsService evaluationsService;
 
 
     @Override
-    public LtiAuthenticationRequest loginInitiation(final LtiLoginInitiationRequest loginInitiationRequest) {
+    public AuthenticationRequest loginInitiation(final LoginInitiationRequest loginInitiationRequest) {
         final var issuer = loginInitiationRequest.getIssuer(); // This is never null
 
         // Note that, in both cases
@@ -80,7 +60,7 @@ public class LtiAppManager implements LtiAppService {
         final var state = ltiStateHelper.encode(stateData);
 
         // Build the authentication request.
-        return new LtiAuthenticationRequest(
+        return new AuthenticationRequest(
                 toolDeployment.getOidcAuthenticationEndpoint(),
                 toolDeployment.getClientId(),
                 loginInitiationRequest.getLoginHint(),
@@ -93,34 +73,57 @@ public class LtiAppManager implements LtiAppService {
 
 
     @Override
-    public LtiContent createExamInitiation(final LtiAuthenticationResponse response) {
-        return handleLtiAuthenticationResponse(response, this::createExamInitiation);
+    public ExamSelectionResponse examSelection(final AuthenticationResponse authenticationResponse) {
+        return this.handleAuthenticationResponse(authenticationResponse, this::createExamInitiation);
     }
 
 
     @Override
-    public void createExamFinalization() {
-        throw new NotImplementedException("Not yet implemented");
+    public ExamSelectedResponse examSelected(final ExamSelectedRequest examSelectedRequest) {
+        return evaluationsService.getExamById(examSelectedRequest.getExamId())
+                .map(exam -> existingExam(exam, examSelectedRequest))
+                .orElseGet(NonExistingExamSelectedResponse::getInstance)
+                ;
     }
 
-    @Override
-    public void takeExam() {
-        throw new NotImplementedException("Not yet implemented");
+
+    // ================================================================================================================
+    // Helpers
+    // ================================================================================================================
+
+    /**
+     * Handles the given {@code response}, continuing the flow with the given {@code andThen} {@link MessageHandler}.
+     *
+     * @param response The {@link AuthenticationResponse} to be handled.
+     * @param andThen  The {@link MessageHandler} used to perform the actual handling operation.
+     * @param <C>      The concrete type of object to be returned
+     * @return The object resulting of the handling.
+     */
+    private <C> C handleAuthenticationResponse(final AuthenticationResponse response, final MessageHandler<C> andThen) {
+        final var stateData = ltiStateHelper.decode(response.getState());
+        final var toolDeployment = toolDeploymentRepository
+                .findById(stateData.getToolDeploymentId())
+                .orElseThrow(IllegalStateException::new) // TODO: define new exception?
+                ;
+        final var ltiMessage = ltiMessageDeserializer.deserialize(response.getIdToken(), toolDeployment);
+        ltiMessageValidator.validateLtiMessage(toolDeployment, stateData.getNonce(), ltiMessage);
+        return andThen.handle(toolDeployment, ltiMessage);
     }
 
+
+    // ================== Message handlers ===================
 
     /**
      * Performs the exam creation initiation step of the Deep Linking flow.
      *
      * @param toolDeployment The {@link ToolDeployment} representing the integration exchanging the message.
      * @param ltiMessage     A {@link Map} representing the LTI message.
-     * @return The {@link LtiContent} representing the content to be shown in the UA in order to select the exam
-     * to be created.
+     * @return The {@link ExamSelectionResponse} resulting of the given {@code ltiMessage}.
      */
-    private LtiContent createExamInitiation(final ToolDeployment toolDeployment, final Map<String, Object> ltiMessage) {
+    private ExamSelectionResponse createExamInitiation(final ToolDeployment toolDeployment, final Map<String, Object> ltiMessage) {
 
         // First get the deep linking settings, and validate that exams can be created.
-        final var settings = ltiDeepLinkingHelper.extractDeepLinkingSettings(ltiMessage);
+        final var settings = ltiDeepLinkingRequestHelper.extractDeepLinkingSettings(ltiMessage);
         validateExamCanBeCreated(settings);
 
 
@@ -133,91 +136,124 @@ public class LtiAppManager implements LtiAppService {
         );
         final var state = examCreationStateHelper.encode(examCreationStateData);
 
-        // Retrieve the frontend.
-        final var frontendDeploymentIterator = frontendDeploymentRepository.findAll().iterator();
-        Assert.state(frontendDeploymentIterator.hasNext(), "No frontend deployment");
-        final var frontendDeployment = frontendDeploymentIterator.next();
-
-        // And expand the template with the state.
-        final var examCreationUrlTemplate = frontendDeployment.getExamCreationUrlTemplate();
-        final var url = StringSubstitutor.replace(examCreationUrlTemplate, examCreationTemplateValuesMap(state));
-
-        // Return the content.
-        return new LtiContent(url);
+        return new ExamSelectionResponse(state);
     }
 
+    /**
+     * Handles the given {@code request} in case the id of the exam it carries exists.
+     *
+     * @param exam    The {@link Exam}.
+     * @param request The {@link ExamSelectedRequest} with needed data to handle this case.
+     * @return An {@link ExistingExamSelectedResponse} if everything is OK, or a {@link NotUpcomingExamSelectedResponse}
+     * if the {@link Exam}'s state is not {@link Exam.State#UPCOMING}.
+     */
+    private ExamSelectedResponse existingExam(final Exam exam, final ExamSelectedRequest request) {
+        if (exam.getState() != Exam.State.UPCOMING) {
+            return NotUpcomingExamSelectedResponse.getInstance();
+        }
+        final var state = examCreationStateHelper.decode(request.getState());
+        final var toolDeployment = toolDeploymentRepository
+                .findById(state.getToolDeploymentId())
+                .orElseThrow(IllegalStateException::new) // TODO: define new exception?
+                ;
+        final var ltiResourceLinkBuilder = adaptExamToLti(exam).url(request.getUrl());
+        Optional.ofNullable(request.getIcon()).map(LtiAppManager::mapImage).ifPresent(ltiResourceLinkBuilder::icon);
+        Optional.ofNullable(request.getThumbnail()).map(LtiAppManager::mapImage).ifPresent(ltiResourceLinkBuilder::thumbnail);
+
+
+        final var ltiMessage = ltiDeepLinkingResponseHelper.buildMessage(
+                toolDeployment,
+                state.getData(),
+                List.of(ltiResourceLinkBuilder.build())
+        );
+
+        return new ExistingExamSelectedResponse(
+                state.getReturnUrl(),
+                ltiMessageSerializer.serialize(ltiMessage, toolDeployment),
+                examExamToExamData(exam)
+        );
+    }
+
+
+    // ================== Other helpers ===================
 
     /**
      * Validates that an exam can be created (using the Deep Linking settings)
      *
-     * @param deepLinkingSettings The {@link LtiDeepLinkingHelper.DeepLinkingSettings}
-     *                            that indicate if an exam can be created.
+     * @param settings The {@link LtiDeepLinkingRequestHelper.DeepLinkingSettings}
+     *                 that indicate if an exam can be created.
      * @throws RuntimeException If an exam cannot be created.
      */
-    private static void validateExamCanBeCreated(final LtiDeepLinkingHelper.DeepLinkingSettings deepLinkingSettings)
+    private static void validateExamCanBeCreated(final LtiDeepLinkingRequestHelper.DeepLinkingSettings settings)
             throws RuntimeException {
-        if (!deepLinkingSettings.getAcceptTypes().contains(LTI_RESOURCE_LINK)) {
+        if (!settings.getAcceptTypes().contains(LTI_RESOURCE_LINK)) {
             throw new RuntimeException(); // TODO: define new exception?
         }
     }
 
-
     /**
-     * Handles the given {@code response}, continuing the flow with the given {@code andThen} {@link LtiMessageHandler}.
+     * Transforms the given {@code exam} into an {@link LtiResourceLink.Builder} instance
+     * (i.e creates the {@link LtiResourceLink.Builder} instance and configures it with the information in the given
+     * {@code exam}, without building the {@link LtiResourceLink} in order to allow further configuration).
      *
-     * @param response The {@link LtiAuthenticationResponse} to be handled.
-     * @param andThen  The {@link LtiMessageHandler} used to perform the actual handling operation.
-     * @return The {@link LtiContent} resulting from the handling.
+     * @param exam The {@link ExamData} with information to configure the {@link LtiResourceLink.Builder}.
+     * @return The created {@link LtiResourceLink.Builder} instance.
      */
-    private LtiContent handleLtiAuthenticationResponse(
-            final LtiAuthenticationResponse response,
-            final LtiMessageHandler andThen) {
+    private static LtiResourceLink.Builder adaptExamToLti(final Exam exam) {
+        final var examId = Long.toString(exam.getId());
+        final var lineItem = LineItem.builder().scoreMaximum(exam.getMaxScore()).resourceId(examId).build();
 
-        final var stateData = ltiStateHelper.decode(response.getState());
-        final var toolDeployment = toolDeploymentRepository
-                .findById(stateData.getToolDeploymentId())
-                .orElseThrow(IllegalStateException::new) // TODO: define new exception?
-                ;
-        final var ltiMessage = ltiMessageHelper.parseMessage(response.getIdToken(), toolDeployment, stateData.getNonce());
-        return andThen.handle(toolDeployment, ltiMessage);
+        return LtiResourceLink.builder().title(exam.getDescription()).lineItem(lineItem).custom(EXAM_ID_CUSTOM, examId);
     }
 
     /**
-     * A functional interface that defines a method to build an {@link LtiContent} from a
+     * Maps the given {@code exam} into an {@link ExamData} instance.
+     *
+     * @param exam The {@link Exam} to be mapped.
+     * @return The {@link ExamData} instance.
+     */
+    private static ExamData examExamToExamData(final Exam exam) {
+        return new ExamData(
+                exam.getId(),
+                exam.getDescription(),
+                exam.getStartingAt(),
+                exam.getDuration(),
+                exam.getMaxScore()
+        );
+    }
+
+    /**
+     * Maps an {@link ExamSelectedRequest.Image} into an {@link LtiResourceLink.Image}.
+     *
+     * @param image The {@link ExamSelectedRequest.Image} to be mapped.
+     * @return The created {@link LtiResourceLink.Image}.
+     */
+    private static LtiResourceLink.Image mapImage(final ExamSelectedRequest.Image image) {
+        return LtiResourceLink.Image.builder()
+                .url(image.getUrl())
+                .width(image.getWidth())
+                .height(image.getHeight())
+                .build()
+                ;
+    }
+
+
+    /**
+     * A functional interface that defines a method to build an object from a
      * {@link ToolDeployment} and an LTI message.
+     *
+     * @param <C> The concrete type of object to be built
      */
     @FunctionalInterface
-    private interface LtiMessageHandler {
+    private interface MessageHandler<C> {
 
         /**
-         * Builds an {@link LtiContent} from a {@link ToolDeployment} and an LTI message.
+         * Builds an object from a {@link ToolDeployment} and an LTI message.
          *
          * @param toolDeployment The {@link ToolDeployment} representing the integration exchanging the message.
          * @param ltiMessage     A {@link Map} representing the LTI message.
-         * @return The {@link LtiContent}.
+         * @return The built object.
          */
-        LtiContent handle(final ToolDeployment toolDeployment, final Map<String, Object> ltiMessage);
-    }
-
-    /**
-     * Creates the value {@link Map} needed to interpolate the "Exam Creation" url template
-     * in a {@link FrontendDeployment} with a {@link StringSubstitutor}.
-     *
-     * @param state The state to be used in the interpolation.
-     * @return The created {@link Map}
-     */
-    private static Map<String, String> examCreationTemplateValuesMap(final String state) {
-        return Map.of(removeVariableSeparator(FrontendDeployment.STATE_VARIABLE), state);
-    }
-
-    /**
-     * Removes the variable separators from the given {@code str}. This method is used to populate a value {@link Map}
-     * used by a {@link StringSubstitutor} to resolve a template.
-     *
-     * @param str The {@link String} to which the separators will be removed.
-     * @return The same {@link String}, but with the variable separators removed.
-     */
-    private static String removeVariableSeparator(final String str) {
-        return str.replace(StringSubstitutor.DEFAULT_VAR_START, "").replace(StringSubstitutor.DEFAULT_VAR_END, "");
+        C handle(final ToolDeployment toolDeployment, final Map<String, Object> ltiMessage);
     }
 }

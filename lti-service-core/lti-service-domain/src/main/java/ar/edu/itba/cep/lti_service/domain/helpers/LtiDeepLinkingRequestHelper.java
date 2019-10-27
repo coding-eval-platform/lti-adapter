@@ -9,10 +9,10 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
- * Component in charge of aiding with Deep Linking messages tasks.
+ * Component in charge of aiding with Deep Linking request messages tasks.
  */
 @Component
-public class LtiDeepLinkingHelper {
+public class LtiDeepLinkingRequestHelper {
 
     private static final String DEEP_LINKING_MESSAGE_TYPE = "LtiDeepLinkingRequest";
 
@@ -49,7 +49,7 @@ public class LtiDeepLinkingHelper {
      */
     private static void validateDeepLinkingMessage(final Map<String, Object> ltiMessage)
             throws RuntimeException {
-        Optional.ofNullable(ltiMessage.get(LtiClaims.MESSAGE_TYPE))
+        Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.MESSAGE_TYPE))
                 .filter(DEEP_LINKING_MESSAGE_TYPE::equals)
                 .orElseThrow(RuntimeException::new) // TODO: define new exception
         ;
@@ -63,10 +63,10 @@ public class LtiDeepLinkingHelper {
      * @throws RuntimeException If the given {@code ltiMessage} does not contain a valid Deep Linking Claim.
      */
     private static DeepLinkingSettings doExtractSettings(final Map<String, Object> ltiMessage) throws RuntimeException {
-        return Optional.ofNullable(ltiMessage.get(LtiClaims.DL_SETTINGS))
+        return Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.DL_SETTINGS))
                 .filter(settings -> settings instanceof Map)
                 .map(Map.class::cast)
-                .map(LtiDeepLinkingHelper::buildFromSettings)
+                .map(LtiDeepLinkingRequestHelper::buildFromSettings)
                 .filter(DeepLinkingSettings::requiredArePresent)
                 .orElseThrow(RuntimeException::new) // TODO: define new exception
                 ;

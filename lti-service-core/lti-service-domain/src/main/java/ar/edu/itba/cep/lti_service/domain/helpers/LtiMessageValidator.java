@@ -3,7 +3,9 @@ package ar.edu.itba.cep.lti_service.domain.helpers;
 import ar.edu.itba.cep.lti_service.models.admin.ToolDeployment;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyConverter;
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwsHeader;
+import io.jsonwebtoken.SigningKeyResolverAdapter;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -17,47 +19,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static ar.edu.itba.cep.lti_service.domain.helpers.LtiConstants.LTI_VERSION;
+
 /**
- * Component in charge of aiding with LTI messages tasks.
+ * Component in charge of validating incoming LTI messages
+ * (i.e it checks that the issuer, client id, deployment id, version and nonce are valid).
  */
 @Component
-public class LtiMessageHelper {
-
-    /**
-     * The LTI version supported by this tool.
-     */
-    private static final String LTI_VERSION = "1.3.0";
-
-
-    /**
-     * Parses the given {@code idToken} into a valid LTI message.
-     *
-     * @param idToken        The id token to be parsed into an LTI message.
-     * @param toolDeployment A {@link ToolDeployment} needed to validate the {@code idToken}.
-     *                       Will be used to check both signature and the content of the message.
-     * @param nonce          The nonce that must be matched.
-     * @return The parsed LTI message, in the form of a {@link Map}.
-     * @throws RuntimeException If the ... // TODO: complete
-     * @apiNote This method always returns a valid LTI message.
-     */
-    public Map<String, Object> parseMessage(
-            final String idToken,
-            final ToolDeployment toolDeployment,
-            final String nonce)
-            throws RuntimeException {
-        Assert.hasText(idToken, "The id token must have text");
-        Assert.notNull(toolDeployment, "The tool deployment must not be null");
-        try {
-            final var ltiMessage = Jwts.parser()
-                    .setSigningKeyResolver(ToolDeploymentJwksSigningKeyResolver.create(toolDeployment))
-                    .parseClaimsJws(idToken)
-                    .getBody();
-            validateLtiMessage(toolDeployment, nonce, ltiMessage);
-            return ltiMessage;
-        } catch (final JwtException e) {
-            throw new RuntimeException("The id token could not be parsed", e); // TODO define new exception
-        }
-    }
+public class LtiMessageValidator {
 
 
     /**
@@ -73,7 +42,7 @@ public class LtiMessageHelper {
      * @see <a href=https://www.imsglobal.org/spec/security/v1p0/#authentication-response-validation>
      * Authentication Response Validation</a>
      */
-    private static void validateLtiMessage(
+    public void validateLtiMessage(
             final ToolDeployment toolDeployment,
             final String nonce,
             final Map<String, Object> ltiMessage) throws RuntimeException {
@@ -86,13 +55,13 @@ public class LtiMessageHelper {
 
 
     /**
-     * Validates the version of the given {@code ltiMessage} (must match {@link #LTI_VERSION}.
+     * Validates the version of the given {@code ltiMessage} (must match {@link LtiConstants#LTI_VERSION}.
      *
      * @param ltiMessage The LTI message to be validated.
      * @throws RuntimeException If the {@code ltiMessage} is not valid.
      */
     private static void validateVersion(final Map<String, Object> ltiMessage) throws RuntimeException {
-        Optional.ofNullable(ltiMessage.get(LtiClaims.VERSION))
+        Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.VERSION))
                 .filter(LTI_VERSION::equals)
                 .orElseThrow(RuntimeException::new) // TODO: define new exception
         ;
@@ -112,7 +81,7 @@ public class LtiMessageHelper {
             throws RuntimeException {
         Assert.notNull(issuer, "The issuer must not be null");
         // The issuer for the platform MUST exactly match the value of the iss (Issuer) Claim
-        Optional.ofNullable(ltiMessage.get(LtiClaims.ISSUER))
+        Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.ISSUER))
                 .filter(issuer::equals)
                 .orElseThrow(RuntimeException::new) // TODO: define new exception
         ;
@@ -136,14 +105,14 @@ public class LtiMessageHelper {
         Assert.notNull(clientId, "The client id must not be null");
         // The aud (audience) Claim MUST contains the client id value registered with the Issuer
         // identified by the iss (Issuer) Claim. The aud Claim MAY contain an array with more than one element.
-        final var audience = Optional.ofNullable(ltiMessage.get(LtiClaims.AUDIENCE))
+        final var audience = Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.AUDIENCE))
                 .filter(val -> val instanceof String || val instanceof Collection)
                 .filter(val -> val instanceof String ? clientId.equals(val) : ((Collection) val).contains(clientId))
                 .orElseThrow(RuntimeException::new);
         // In case more than one element is present in the audience claim...
         // If there are multiple audiences, the azp Claim must be present and match the client id
         if (audience instanceof Collection) {
-            Optional.ofNullable(ltiMessage.get(LtiClaims.AUTHORIZED_PARTY))
+            Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.AUTHORIZED_PARTY))
                     .filter(clientId::equals) // TODO: define new exception
                     .orElseThrow(RuntimeException::new) // TODO: define new exception
             ;
@@ -161,7 +130,7 @@ public class LtiMessageHelper {
     private static void validateDeploymentId(final String deploymentId, final Map<String, Object> ltiMessage)
             throws RuntimeException {
         Assert.notNull(deploymentId, "The deployment id must not be null");
-        Optional.ofNullable(ltiMessage.get(LtiClaims.DEPLOYMENT_ID))
+        Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.DEPLOYMENT_ID))
                 .filter(deploymentId::equals)
                 .orElseThrow(RuntimeException::new) // TODO: define new exception
         ;
@@ -183,7 +152,7 @@ public class LtiMessageHelper {
         // The received nonce must be unique to avoid replay attacks.
         // This is achieved by using UUID as a nonce when creating the LtiAuthenticationRequest
         // (note that the nonce is part of the state sent in the said request, which is then signed with a private key).
-        Optional.ofNullable(ltiMessage.get(LtiClaims.NONCE))
+        Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.NONCE))
                 .filter(nonce::equals)
                 .orElseThrow(RuntimeException::new) // TODO: define new exception
         ;

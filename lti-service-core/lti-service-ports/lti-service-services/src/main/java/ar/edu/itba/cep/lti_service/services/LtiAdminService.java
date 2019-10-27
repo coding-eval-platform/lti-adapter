@@ -3,7 +3,9 @@ package ar.edu.itba.cep.lti_service.services;
 import ar.edu.itba.cep.lti_service.models.admin.FrontendDeployment;
 import ar.edu.itba.cep.lti_service.models.admin.ToolDeployment;
 import com.bellotapps.webapps_commons.exceptions.UniqueViolationException;
+import io.jsonwebtoken.SignatureAlgorithm;
 
+import java.security.PrivateKey;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -75,6 +77,8 @@ public interface LtiAdminService {
      * @param issuer                     The issuing authority.
      * @param oidcAuthenticationEndpoint Endpoint to which the user agent is redirected after a login initiation request.
      * @param jwksEndpoint               Endpoint at which the platform's public keys can be found.
+     * @param privateKey                 The {@link PrivateKey} needed to sign messages sent to the platform.
+     * @param signatureAlgorithm         The {@link SignatureAlgorithm}.
      * @return The created {@link ToolDeployment}.
      * @throws IllegalArgumentException In case any value is not a valid one.
      * @throws UniqueViolationException If a {@link ToolDeployment} already exists for the given
@@ -85,7 +89,9 @@ public interface LtiAdminService {
             final String clientId,
             final String issuer,
             final String oidcAuthenticationEndpoint,
-            final String jwksEndpoint) throws IllegalArgumentException, UniqueViolationException;
+            final String jwksEndpoint,
+            final PrivateKey privateKey,
+            final SignatureAlgorithm signatureAlgorithm) throws IllegalArgumentException, UniqueViolationException;
 
     /**
      * Removes the {@link ToolDeployment} with the given {@code id}

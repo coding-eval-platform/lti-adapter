@@ -19,6 +19,7 @@
     </properties>
 
     <modules>
+        <module>lti-service-external-cep-services</module>
         <module>lti-service-services</module>
         <module>lti-service-repositories</module>
     </modules>

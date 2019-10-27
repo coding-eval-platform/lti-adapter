@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.Optional;
 import java.util.UUID;
 
 import static ar.edu.itba.cep.lti_service.domain.helpers.ExamCreationStateHelper.ExamCreationStateData;
@@ -42,15 +43,17 @@ public class ExamCreationStateHelper extends AbstractJwtStateHelper<ExamCreation
      * and then returned again.
      *
      * @param builder The {@link JwtBuilder} to be configured.
-     * @param data    The {@link ExamCreationStateData} from where information will be extracted.
-     * @return The given {@code builder}, but configured with information in the given {@code data}.
+     * @param state   The {@link ExamCreationStateData} from where information will be extracted.
+     * @return The given {@code builder}, but configured with information in the given {@code state}.
      */
-    private static JwtBuilder claimsSetter(final JwtBuilder builder, final ExamCreationStateData data) {
-        return builder
-                .claim(RETURN_URL_CLAIM, data.getReturnUrl())
-                .claim(DATA_CLAIM, data.getData())
-                .claim(TOOL_DEPLOYMENT_ID_CLAIM, data.getToolDeploymentId())
-                .claim(NONCE_CLAIM, data.getNonce());
+    private static JwtBuilder claimsSetter(final JwtBuilder builder, final ExamCreationStateData state) {
+        builder
+                .claim(RETURN_URL_CLAIM, state.getReturnUrl())
+                .claim(TOOL_DEPLOYMENT_ID_CLAIM, state.getToolDeploymentId())
+                .claim(NONCE_CLAIM, state.getNonce())
+        ;
+        Optional.ofNullable(state.getData()).ifPresent(value -> builder.claim(DATA_CLAIM, value)); // can be null
+        return builder;
     }
 
 

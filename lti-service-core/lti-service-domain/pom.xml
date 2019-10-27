@@ -37,6 +37,16 @@
             <artifactId>lti-service-services</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>lti-service-external-cep-services</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ar.edu.itba.cep</groupId>
+            <artifactId>commons-lti-api</artifactId>
+        </dependency>
 
         <!-- Third party libraries-->
         <!-- Commons keys -->

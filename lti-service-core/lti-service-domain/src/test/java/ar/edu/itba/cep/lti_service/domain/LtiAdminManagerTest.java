@@ -7,12 +7,14 @@ import ar.edu.itba.cep.lti_service.repositories.FrontendDeploymentRepository;
 import ar.edu.itba.cep.lti_service.repositories.ToolDeploymentRepository;
 import com.bellotapps.webapps_commons.exceptions.UniqueViolationException;
 import com.github.javafaker.Faker;
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.security.PrivateKey;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -183,7 +185,7 @@ public class LtiAdminManagerTest {
      * issuer, client id and deployment id (i.e the {@link ToolDeployment} is created, saved and returned).
      */
     @Test
-    void testToolDeploymentRegistration() {
+    void testToolDeploymentRegistration(@Mock(name = "privateKey") final PrivateKey privateKey) {
         final var deploymentId = deploymentId();
         final var clientId = clientId();
         final var issuer = issuer();
@@ -197,7 +199,9 @@ public class LtiAdminManagerTest {
                 clientId,
                 issuer,
                 oidcAuthenticationEndpoint,
-                jwksEndpoint
+                jwksEndpoint,
+                privateKey,
+                signatureAlgorithm()
         );
 
         Assertions.assertAll(
@@ -236,7 +240,7 @@ public class LtiAdminManagerTest {
      * issuer, client id and deployment id (i.e an {@link UniqueViolationException} is thrown).
      */
     @Test
-    void testToolDeploymentRegistrationUniqueness() {
+    void testToolDeploymentRegistrationUniqueness(@Mock(name = "privateKey") final PrivateKey privateKey) {
         final var deploymentId = deploymentId();
         final var clientId = clientId();
         final var issuer = issuer();
@@ -249,7 +253,9 @@ public class LtiAdminManagerTest {
                         clientId,
                         issuer,
                         oidcAuthenticationEndpoint(),
-                        jwksEndpoint()
+                        jwksEndpoint(),
+                        privateKey,
+                        signatureAlgorithm()
                 ),
                 "Registration of a Tool Deployment with a given deployment id, client id and issuer" +
                         " that already exists is being allowed"
@@ -425,6 +431,13 @@ public class LtiAdminManagerTest {
         return "https://" + Faker.instance().internet().domainName() + "/jwks";
     }
 
+    /**
+     * @return A {@link SignatureAlgorithm}.
+     */
+    private static SignatureAlgorithm signatureAlgorithm() {
+        return SignatureAlgorithm.RS512;
+    }
+
 
     // ========================================
     // Frontend Deployment
@@ -450,10 +463,10 @@ public class LtiAdminManagerTest {
     private static String examTakingUrlTemplate() {
         return "https://"
                 + Faker.instance().internet().domainName()
-                + "/take-exam/"
-                + EXAM_ID_VARIABLE
-                + "?token="
-                + JWT_VARIABLE
+                + "/take-exam/" + EXAM_ID_VARIABLE
+                + "?access-token=" + ACCESS_TOKEN_VARIABLE
+                + "?refresh-token=" + REFRESH_TOKEN_VARIABLE
+                + "?token-id=" + TOKEN_ID_VARIABLE
                 ;
     }
 }

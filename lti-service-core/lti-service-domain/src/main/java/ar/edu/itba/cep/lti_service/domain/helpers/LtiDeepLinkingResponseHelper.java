@@ -1,6 +1,6 @@
 package ar.edu.itba.cep.lti_service.domain.helpers;
 
-import ar.edu.itba.cep.lti_service.models.admin.ToolDeployment;
+import ar.edu.itba.cep.lti_service.models.ToolDeployment;
 import lombok.Getter;
 import lombok.Singular;
 import org.springframework.stereotype.Component;

@@ -28,6 +28,10 @@
 
         <!-- Third party libraries -->
         <dependency>
+            <groupId>ar.edu.itba.cep</groupId>
+            <artifactId>commons-roles</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.bellotapps.webapps</groupId>
             <artifactId>webapps-commons-exceptions</artifactId>
         </dependency>

@@ -1,9 +1,6 @@
-package ar.edu.itba.cep.lti_service.domain;
+package ar.edu.itba.cep.lti_service.domain.managers;
 
-import ar.edu.itba.cep.lti_service.domain.managers.LtiAdminManager;
-import ar.edu.itba.cep.lti_service.models.admin.FrontendDeployment;
-import ar.edu.itba.cep.lti_service.models.admin.ToolDeployment;
-import ar.edu.itba.cep.lti_service.repositories.FrontendDeploymentRepository;
+import ar.edu.itba.cep.lti_service.models.ToolDeployment;
 import ar.edu.itba.cep.lti_service.repositories.ToolDeploymentRepository;
 import com.bellotapps.webapps_commons.exceptions.UniqueViolationException;
 import com.github.javafaker.Faker;
@@ -17,10 +14,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.security.PrivateKey;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.UUID;
 
-import static ar.edu.itba.cep.lti_service.models.admin.FrontendDeployment.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -34,11 +29,6 @@ public class LtiAdminManagerTest {
      * This reference is saved in order to configure its behaviour in each test.
      */
     private final ToolDeploymentRepository toolDeploymentRepository;
-    /**
-     * The {@link FrontendDeploymentRepository} that is injected to the {@link LtiAdminManager}.
-     * This reference is saved in order to configure its behaviour in each test.
-     */
-    private final FrontendDeploymentRepository frontendDeploymentRepository;
 
     /**
      * The {@link LtiAdminManager} to be tested.
@@ -49,17 +39,13 @@ public class LtiAdminManagerTest {
     /**
      * Constructor.
      *
-     * @param toolDeploymentRepository     A mocked {@link ToolDeploymentRepository}
-     *                                     to be injected into a {@link LtiAdminManager} that will be tested.
-     * @param frontendDeploymentRepository A mocked {@link FrontendDeploymentRepository}
-     *                                     to be injected into a {@link LtiAdminManager} that will be tested.
+     * @param toolDeploymentRepository A mocked {@link ToolDeploymentRepository}
+     *                                 to be injected into a {@link LtiAdminManager} that will be tested..
      */
     public LtiAdminManagerTest(
-            @Mock(name = "toolDeploymentRepository") final ToolDeploymentRepository toolDeploymentRepository,
-            @Mock(name = "frontendDeploymentRepository") final FrontendDeploymentRepository frontendDeploymentRepository) {
+            @Mock(name = "toolDeploymentRepository") final ToolDeploymentRepository toolDeploymentRepository) {
         this.toolDeploymentRepository = toolDeploymentRepository;
-        this.frontendDeploymentRepository = frontendDeploymentRepository;
-        this.ltiAdminManager = new LtiAdminManager(toolDeploymentRepository, frontendDeploymentRepository);
+        this.ltiAdminManager = new LtiAdminManager(toolDeploymentRepository);
     }
 
 
@@ -94,7 +80,6 @@ public class LtiAdminManagerTest {
                 )
         );
         verify(toolDeploymentRepository, only()).findAll();
-        verifyZeroInteractions(frontendDeploymentRepository);
     }
 
     /**
@@ -114,7 +99,6 @@ public class LtiAdminManagerTest {
                 "The tool deployments list returned by the manager is not the same as the returned by the repository"
         );
         verify(toolDeploymentRepository, only()).find(issuer);
-        verifyZeroInteractions(frontendDeploymentRepository);
     }
 
     /**
@@ -135,7 +119,6 @@ public class LtiAdminManagerTest {
                 "The tool deployments list returned by the manager is not the same as the returned by the repository"
         );
         verify(toolDeploymentRepository, only()).find(clientId, issuer);
-        verifyZeroInteractions(frontendDeploymentRepository);
     }
 
     /**
@@ -155,7 +138,6 @@ public class LtiAdminManagerTest {
                 "The tool deployment returned by the manager is not the same as the returned by the repository"
         );
         verify(toolDeploymentRepository, only()).findById(id);
-        verifyZeroInteractions(frontendDeploymentRepository);
     }
 
     /**
@@ -177,7 +159,6 @@ public class LtiAdminManagerTest {
                 "The tool deployment returned by the manager is not the same as the returned by the repository"
         );
         verify(toolDeploymentRepository, only()).find(deploymentId, clientId, issuer);
-        verifyZeroInteractions(frontendDeploymentRepository);
     }
 
     /**
@@ -232,7 +213,6 @@ public class LtiAdminManagerTest {
                 )
         );
         verifyNoMoreInteractions(toolDeploymentRepository);
-        verifyZeroInteractions(frontendDeploymentRepository);
     }
 
     /**
@@ -261,7 +241,6 @@ public class LtiAdminManagerTest {
                         " that already exists is being allowed"
         );
         verify(toolDeploymentRepository, only()).exists(deploymentId, clientId, issuer);
-        verifyZeroInteractions(frontendDeploymentRepository);
     }
 
     /**
@@ -279,7 +258,6 @@ public class LtiAdminManagerTest {
         verify(toolDeploymentRepository, times(1)).existsById(id);
         verify(toolDeploymentRepository, times(1)).deleteById(id);
         verifyNoMoreInteractions(toolDeploymentRepository);
-        verifyZeroInteractions(frontendDeploymentRepository);
     }
 
     /**
@@ -294,90 +272,6 @@ public class LtiAdminManagerTest {
         ltiAdminManager.unregisterToolDeployment(id);
 
         verify(toolDeploymentRepository, only()).existsById(id);
-        verifyZeroInteractions(frontendDeploymentRepository);
-    }
-
-
-    // ================================================================================================================
-    // Frontend deployment
-    // ================================================================================================================
-
-    /**
-     * Tests that registering the {@link FrontendDeployment} works as expected when no one exists
-     * (i.e the {@link FrontendDeployment} is created, saved and returned).
-     */
-    @Test
-    void testFrontendDeploymentRegistration() {
-        final var examCreationUrl = examCreationUrlTemplate();
-        final var examTakingUrlTemplate = examTakingUrlTemplate();
-
-        when(frontendDeploymentRepository.count()).thenReturn(0L);
-        when(frontendDeploymentRepository.save(any(FrontendDeployment.class))).then(i -> i.getArgument(0));
-
-        final var frontendDeployment = ltiAdminManager.registerFrontend(
-                examCreationUrl,
-                examTakingUrlTemplate
-        );
-
-        Assertions.assertAll(
-                "Creating a FrontendDeployment is not working as expected",
-                () -> Assertions.assertEquals(
-                        examCreationUrl,
-                        frontendDeployment.getExamCreationUrlTemplate(),
-                        "The Exam Creation url does not match"
-                ),
-                () -> Assertions.assertEquals(
-                        examTakingUrlTemplate,
-                        frontendDeployment.getExamTakingUrlTemplate(),
-                        "The Exam Taking url template does not match"
-                )
-        );
-
-        verifyZeroInteractions(toolDeploymentRepository);
-        verify(frontendDeploymentRepository, times(1)).count();
-        verify(frontendDeploymentRepository, times(1)).save(
-                argThat(
-                        fd -> examCreationUrl.equals(fd.getExamCreationUrlTemplate())
-                                && examTakingUrlTemplate.equals(fd.getExamTakingUrlTemplate())
-                )
-        );
-        verifyNoMoreInteractions(frontendDeploymentRepository);
-    }
-
-    /**
-     * Tests that registering the {@link FrontendDeployment} works as expected when already exists one
-     * (i.e an {@link UniqueViolationException} is thrown).
-     */
-    @Test
-    void testFrontendDeploymentRegistrationUniqueness() {
-        when(frontendDeploymentRepository.count()).thenReturn((long) new Random().nextInt(Short.MAX_VALUE));
-
-        Assertions.assertThrows(
-                UniqueViolationException.class,
-                () -> ltiAdminManager.registerFrontend(
-                        examCreationUrlTemplate(),
-                        examTakingUrlTemplate()
-                ),
-                "Registration of a Frontend Deployment (when there is already another frontend registered)" +
-                        " is being allowed"
-        );
-
-        verifyZeroInteractions(toolDeploymentRepository);
-        verify(frontendDeploymentRepository, only()).count();
-    }
-
-    /**
-     * Tests that unregistering the {@link FrontendDeployment} works as expected
-     * (always the {@link FrontendDeploymentRepository#deleteAll()} is called).
-     */
-    @Test
-    void testFrontendDeploymentUnregistration() {
-        doNothing().when(frontendDeploymentRepository).deleteAll();
-
-        ltiAdminManager.unregisterFrontend();
-
-        verifyZeroInteractions(toolDeploymentRepository);
-        verify(frontendDeploymentRepository, only()).deleteAll();
     }
 
 
@@ -436,37 +330,5 @@ public class LtiAdminManagerTest {
      */
     private static SignatureAlgorithm signatureAlgorithm() {
         return SignatureAlgorithm.RS512;
-    }
-
-
-    // ========================================
-    // Frontend Deployment
-    // ========================================
-
-    /**
-     * @return A valid {@link FrontendDeployment} id.
-     */
-    private static UUID frontendDeploymentId() {
-        return UUID.randomUUID();
-    }
-
-    /**
-     * @return A valid "exam creation" url.
-     */
-    private static String examCreationUrlTemplate() {
-        return "https://" + Faker.instance().internet().domainName() + "/create-exam?state=" + STATE_VARIABLE;
-    }
-
-    /**
-     * @return A valid "exam taking" url template.
-     */
-    private static String examTakingUrlTemplate() {
-        return "https://"
-                + Faker.instance().internet().domainName()
-                + "/take-exam/" + EXAM_ID_VARIABLE
-                + "?access-token=" + ACCESS_TOKEN_VARIABLE
-                + "?refresh-token=" + REFRESH_TOKEN_VARIABLE
-                + "?token-id=" + TOKEN_ID_VARIABLE
-                ;
     }
 }

@@ -1,6 +1,6 @@
 package ar.edu.itba.cep.lti_service.repositories;
 
-import ar.edu.itba.cep.lti_service.models.admin.ToolDeployment;
+import ar.edu.itba.cep.lti_service.models.ToolDeployment;
 import com.bellotapps.webapps_commons.persistence.repository_utils.repositories.BasicRepository;
 
 import java.util.List;

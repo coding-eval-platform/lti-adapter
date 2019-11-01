@@ -1,5 +1,6 @@
 package ar.edu.itba.cep.lti_service.domain.helpers;
 
+import ar.edu.itba.cep.lti_service.models.ToolDeployment;
 import io.jsonwebtoken.*;
 import lombok.Data;
 
@@ -54,7 +55,7 @@ public class LtiStateHelper extends AbstractJwtStateHelper<StateData, StateDataJ
     @Data(staticConstructor = "create")
     public static final class StateData {
         /**
-         * The id of the {@link ar.edu.itba.cep.lti_service.models.admin.ToolDeployment} representing the
+         * The id of the {@link ToolDeployment} representing the
          * integration between the LMS and this tool, used to handle the reception of the LTI message.
          */
         private final UUID toolDeploymentId;

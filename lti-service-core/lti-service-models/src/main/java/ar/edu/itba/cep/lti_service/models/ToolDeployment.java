@@ -1,10 +1,7 @@
-package ar.edu.itba.cep.lti_service.models.admin;
+package ar.edu.itba.cep.lti_service.models;
 
 import io.jsonwebtoken.SignatureAlgorithm;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import org.springframework.util.Assert;
 
 import java.security.PrivateKey;
@@ -14,8 +11,8 @@ import java.util.UUID;
  * Represents a tool deployment in an LTI platform.
  */
 @Getter
-@NoArgsConstructor(force = true)
 @ToString(doNotUseGetters = true)
+@NoArgsConstructor(force = true, access = AccessLevel.PACKAGE)
 @EqualsAndHashCode(of = "id", doNotUseGetters = true)
 public class ToolDeployment {
 

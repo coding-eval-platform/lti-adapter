@@ -1,6 +1,6 @@
 package ar.edu.itba.cep.lti_service.domain.helpers;
 
-import ar.edu.itba.cep.lti_service.models.admin.ToolDeployment;
+import ar.edu.itba.cep.lti_service.models.ToolDeployment;
 import io.jsonwebtoken.Jwts;
 import org.springframework.stereotype.Component;
 

@@ -36,6 +36,8 @@ public final class LtiConstants {
         public static final String DEPLOYMENT_ID = "https://purl.imsglobal.org/spec/lti/claim/deployment_id";
         public static final String TARGET_LINK_URI = "https://purl.imsglobal.org/spec/lti/claim/target_link_uri";
         public static final String RESOURCE_LINK = "https://purl.imsglobal.org/spec/lti/claim/resource_link";
+        public static final String CUSTOM = "https://purl.imsglobal.org/spec/lti/claim/custom";
+        public static final String LAUNCH_PRESENTATION = "https://purl.imsglobal.org/spec/lti/claim/launch_presentation";
 
         // User identification and customization claims
         public static final String GIVEN_NAME = "given_name";
@@ -51,5 +53,8 @@ public final class LtiConstants {
         public static final String DL_SETTINGS = "https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings";
         public static final String DL_CONTENT_ITEMS = "https://purl.imsglobal.org/spec/lti-dl/claim/content_items";
         public static final String DL_DATA = "https://purl.imsglobal.org/spec/lti-dl/claim/data";
+
+        // Assignment and Grade Services stuff
+        public static final String AGS_CAPABILITIES = "https://purl.imsglobal.org/spec/lti-ags/claim/endpoint";
     }
 }

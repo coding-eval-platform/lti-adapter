@@ -6,15 +6,17 @@ import ar.edu.itba.cep.lti_service.domain.helpers.LtiDeepLinkingResponseHelper.L
 import ar.edu.itba.cep.lti_service.domain.helpers.LtiDeepLinkingResponseHelper.LtiResourceLink.LineItem;
 import ar.edu.itba.cep.lti_service.external_cep_services.evaluations_service.EvaluationsService;
 import ar.edu.itba.cep.lti_service.external_cep_services.evaluations_service.Exam;
-import ar.edu.itba.cep.lti_service.models.admin.ToolDeployment;
+import ar.edu.itba.cep.lti_service.external_cep_services.tokens_service.TokensService;
+import ar.edu.itba.cep.lti_service.models.ExamTaking;
+import ar.edu.itba.cep.lti_service.models.ToolDeployment;
+import ar.edu.itba.cep.lti_service.repositories.ExamTakingRepository;
 import ar.edu.itba.cep.lti_service.repositories.ToolDeploymentRepository;
+import ar.edu.itba.cep.roles.Role;
 import com.bellotapps.webapps_commons.exceptions.NoSuchEntityException;
 import lombok.AllArgsConstructor;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static ar.edu.itba.cep.lti_service.domain.helpers.LtiDeepLinkingRequestHelper.DeepLinkingContentType.LTI_RESOURCE_LINK;
 
@@ -25,8 +27,13 @@ import static ar.edu.itba.cep.lti_service.domain.helpers.LtiDeepLinkingRequestHe
 public class LtiAppManager implements LtiService {
 
     private static final String EXAM_ID_CUSTOM = "exam-id";
+    private static final String RETURN_URL_LAUNCH_PRESENTATION = "return_url";
+    private static final String RESOURCE_LINK_REQUEST = "LtiResourceLinkRequest";
+
 
     private final ToolDeploymentRepository toolDeploymentRepository;
+    private final ExamTakingRepository examTakingRepository;
+
     private final LtiStateHelper ltiStateHelper;
     private final LtiMessageDeserializer ltiMessageDeserializer;
     private final LtiMessageValidator ltiMessageValidator;
@@ -35,7 +42,10 @@ public class LtiAppManager implements LtiService {
     private final LtiMessageSerializer ltiMessageSerializer;
     private final LtiDeepLinkingResponseHelper ltiDeepLinkingResponseHelper;
 
+    private final LtiAssignmentAndGradeServicesHelper ltiAssignmentAndGradeServicesHelper;
+
     private final EvaluationsService evaluationsService;
+    private final TokensService tokensService;
 
 
     @Override
@@ -74,7 +84,7 @@ public class LtiAppManager implements LtiService {
 
     @Override
     public ExamSelectionResponse examSelection(final AuthenticationResponse authenticationResponse) {
-        return this.handleAuthenticationResponse(authenticationResponse, this::createExamInitiation);
+        return this.handleAuthenticationResponse(authenticationResponse, this::examSelection);
     }
 
 
@@ -86,6 +96,10 @@ public class LtiAppManager implements LtiService {
                 ;
     }
 
+    @Override
+    public ExamTakingResponse takeExam(final AuthenticationResponse authenticationResponse) {
+        return this.handleAuthenticationResponse(authenticationResponse, this::takeExam);
+    }
 
     // ================================================================================================================
     // Helpers
@@ -120,11 +134,13 @@ public class LtiAppManager implements LtiService {
      * @param ltiMessage     A {@link Map} representing the LTI message.
      * @return The {@link ExamSelectionResponse} resulting of the given {@code ltiMessage}.
      */
-    private ExamSelectionResponse createExamInitiation(final ToolDeployment toolDeployment, final Map<String, Object> ltiMessage) {
+    private ExamSelectionResponse examSelection(final ToolDeployment toolDeployment, final Map<String, Object> ltiMessage) {
 
-        // First get the deep linking settings, and validate that exams can be created.
+        // First get the deep linking settings and the assignment and grades services capabilities,
+        // and validate that exams can be created.
         final var settings = ltiDeepLinkingRequestHelper.extractDeepLinkingSettings(ltiMessage);
-        validateExamCanBeCreated(settings);
+        final var capabilities = ltiAssignmentAndGradeServicesHelper.extractCapabilities(ltiMessage);
+        validateExamCanBeCreated(settings, capabilities);
 
 
         // Then create the state that needs to be sent to the UA.
@@ -174,22 +190,107 @@ public class LtiAppManager implements LtiService {
         );
     }
 
+    private ExamTakingResponse takeExam(final ToolDeployment toolDeployment, final Map<String, Object> ltiMessage) {
+        // First check if the message is an LtiResourceLinkRequest
+        if (!RESOURCE_LINK_REQUEST.equals(ltiMessage.get(LtiConstants.LtiClaims.MESSAGE_TYPE))) {
+            throw new RuntimeException("Message type should be an LtiResourceLinkRequest"); // TODO: define new exception?
+        }
+
+        // If yes, extract capabilities in order to check if the score can be pushed into Campus
+        final var capabilities = ltiAssignmentAndGradeServicesHelper.extractCapabilities(ltiMessage);
+        validateScoreScope(capabilities);
+
+        // If control reached here, then the message contains the score scope, which indicates that the score
+        // can be pushed into the LMS.
+
+        // We proceed to process the message...
+        // First extract stuff to be stored for later retrieval for when the score publishing process is executed.
+        final var examId = getCustomProperties(ltiMessage)
+                .flatMap(m -> Optional.ofNullable(m.get(EXAM_ID_CUSTOM)))
+                .filter(String.class::isInstance)
+                .map(String.class::cast)
+                .map(str -> {
+                    try {
+                        return Long.valueOf(str);
+                    } catch (final NumberFormatException e) {
+                        return null;
+                    }
+                })
+                .orElseThrow(() -> new RuntimeException("Missing exam id"));
+        final var userId = Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.SUBJECT))
+                .filter(String.class::isInstance)
+                .map(String.class::cast)
+                .orElseThrow(() -> new RuntimeException("Missing user id")); // TODO: define new exception?
+        final var lineItemUrl = capabilities.getLineItem();
+        if (lineItemUrl == null) {
+            throw new RuntimeException("Missing lineitem capability"); // TODO: define new exception?
+        }
+        examTakingRepository.save(ExamTaking.withoutId(examId, userId, lineItemUrl, toolDeployment));
+
+        // Then get other needed stuff for the response.
+        final var tokenData = tokensService.tokenFor(userId, Set.of(Role.STUDENT))
+                .orElseThrow(() -> new RuntimeException("Could not get token")); // TODO: define new exception?
+        final var returnUrl = launchPresentation(ltiMessage)
+                .flatMap(m -> Optional.ofNullable(m.get(RETURN_URL_LAUNCH_PRESENTATION)))
+                .filter(String.class::isInstance)
+                .map(String.class::cast)
+                .orElse(null);
+
+        // Finally, build the response
+        return new ExamTakingResponse(
+                examId,
+                tokenData.getId(),
+                tokenData.getAccessToken(),
+                tokenData.getRefreshToken(),
+                returnUrl
+        );
+    }
 
     // ================== Other helpers ===================
 
     /**
-     * Validates that an exam can be created (using the Deep Linking settings)
+     * Validates that the tool can link an exam in the LMS.
      *
-     * @param settings The {@link LtiDeepLinkingRequestHelper.DeepLinkingSettings}
-     *                 that indicate if an exam can be created.
+     * @param settings     The {@link LtiDeepLinkingRequestHelper.DeepLinkingSettings} to be analyzed.
+     * @param capabilities The {@link LtiAssignmentAndGradeServicesHelper.AssignmentAndGradeServicesCapabilities}
+     *                     to be analyzed.
      * @throws RuntimeException If an exam cannot be created.
      */
-    private static void validateExamCanBeCreated(final LtiDeepLinkingRequestHelper.DeepLinkingSettings settings)
+    private static void validateExamCanBeCreated(
+            final LtiDeepLinkingRequestHelper.DeepLinkingSettings settings,
+            final LtiAssignmentAndGradeServicesHelper.AssignmentAndGradeServicesCapabilities capabilities)
             throws RuntimeException {
+        validateResourceLinkCanBeCreated(settings);
+        validateScoreScope(capabilities);
+    }
+
+    /**
+     * Validates that the given {@code settings} indicates that a Resource Link can be created.
+     *
+     * @param settings The {@link LtiDeepLinkingRequestHelper.DeepLinkingSettings} to be analyzed.
+     */
+    private static void validateResourceLinkCanBeCreated(
+            final LtiDeepLinkingRequestHelper.DeepLinkingSettings settings) throws RuntimeException {
         if (!settings.getAcceptTypes().contains(LTI_RESOURCE_LINK)) {
-            throw new RuntimeException(); // TODO: define new exception?
+            throw new RuntimeException("Missing lti resource link in accept types"); // TODO: define new exception?
         }
     }
+
+    /**
+     * Validates that the {@link LtiAssignmentAndGradeServicesHelper#SCORE_SCOPE} is present in the given
+     * {@code capabilities} scope.
+     *
+     * @param capabilities The {@link LtiAssignmentAndGradeServicesHelper.AssignmentAndGradeServicesCapabilities}
+     *                     to be analyzed.
+     */
+    private static void validateScoreScope(
+            final LtiAssignmentAndGradeServicesHelper.AssignmentAndGradeServicesCapabilities capabilities)
+            throws RuntimeException {
+        if (!capabilities.getScopes().contains(LtiAssignmentAndGradeServicesHelper.SCORE_SCOPE)) {
+            throw new RuntimeException("Missing score scope"); // TODO: define new exception?
+        }
+    }
+
 
     /**
      * Transforms the given {@code exam} into an {@link LtiResourceLink.Builder} instance
@@ -234,6 +335,42 @@ public class LtiAppManager implements LtiService {
                 .width(image.getWidth())
                 .height(image.getHeight())
                 .build()
+                ;
+    }
+
+    /**
+     * Extracts the {@link Map} of custom properties in the given {@code ltiMessage}.
+     *
+     * @param ltiMessage The LTI message to be analyzed.
+     * @return The {@link Map} of custom properties.
+     */
+    private static Optional<Map<String, Object>> getCustomProperties(final Map<String, Object> ltiMessage) {
+        return getMap(LtiConstants.LtiClaims.CUSTOM, ltiMessage);
+    }
+
+    /**
+     * Retrieves the launch presentation {@link Map} from the given {@code ltiMessage}.
+     *
+     * @param ltiMessage The LTI message to be analyzed.
+     * @return THe launch presentation {@link Map}.
+     */
+    private static Optional<Map<String, Object>> launchPresentation(final Map<String, Object> ltiMessage) {
+        return getMap(LtiConstants.LtiClaims.LAUNCH_PRESENTATION, ltiMessage);
+    }
+
+    /**
+     * Retrieves the {@link Map} for the given {@code claim} from the given {@code ltiMessage}.
+     *
+     * @param claim      The claim to be extracted.
+     * @param ltiMessage The LTI message to be analyzed.
+     * @return THe launch presentation {@link Map}.
+     */
+    private static Optional<Map<String, Object>> getMap(final String claim, final Map<String, Object> ltiMessage) {
+        return Optional.ofNullable(ltiMessage.get(claim))
+                .filter(Map.class::isInstance)
+                .map(m -> (Map<?, ?>) m)
+                .filter(m -> m.keySet().stream().allMatch(String.class::isInstance))
+                .map(m -> m.entrySet().stream().collect(Collectors.toMap(e -> e.getKey().toString(), Map.Entry::getValue)))
                 ;
     }
 

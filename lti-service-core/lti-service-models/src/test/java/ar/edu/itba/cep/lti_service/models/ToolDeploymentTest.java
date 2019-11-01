@@ -1,4 +1,4 @@
-package ar.edu.itba.cep.lti_service.models.admin;
+package ar.edu.itba.cep.lti_service.models;
 
 import com.github.javafaker.Faker;
 import io.jsonwebtoken.SignatureAlgorithm;

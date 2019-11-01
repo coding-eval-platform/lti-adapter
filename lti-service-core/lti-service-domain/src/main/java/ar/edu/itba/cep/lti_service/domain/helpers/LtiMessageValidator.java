@@ -1,6 +1,6 @@
 package ar.edu.itba.cep.lti_service.domain.helpers;
 
-import ar.edu.itba.cep.lti_service.models.admin.ToolDeployment;
+import ar.edu.itba.cep.lti_service.models.ToolDeployment;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyConverter;
 import io.jsonwebtoken.Claims;

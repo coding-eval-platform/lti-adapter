@@ -1,7 +1,6 @@
 package ar.edu.itba.cep.lti_service.services;
 
-import ar.edu.itba.cep.lti_service.models.admin.FrontendDeployment;
-import ar.edu.itba.cep.lti_service.models.admin.ToolDeployment;
+import ar.edu.itba.cep.lti_service.models.ToolDeployment;
 import com.bellotapps.webapps_commons.exceptions.UniqueViolationException;
 import io.jsonwebtoken.SignatureAlgorithm;
 
@@ -11,8 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * A port into the application that allows configuring the LTI behaviour
- * (i.e allow registering tool deployments and the frontend).
+ * A port into the application that provides LTI services.
  */
 public interface LtiAdminService {
 
@@ -100,29 +98,4 @@ public interface LtiAdminService {
      * @apiNote This is an idempotent operation.
      */
     void unregisterToolDeployment(final UUID id);
-
-
-    // ================================================================================================================
-    // Frontend deployment
-    // ================================================================================================================
-
-    /**
-     * Creates the {@link FrontendDeployment}. Only one can exists at a given time.
-     *
-     * @param examCreationUrl       The url at which the "exam creation" form is deployed.
-     * @param examTakingUrlTemplate The url template at which the "exam taking" feature is deployed.
-     * @return The created {@link FrontendDeployment}.
-     * @throws IllegalArgumentException In case any value is not a valid one.
-     * @throws UniqueViolationException If the method is executed
-     *                                  when another {@link FrontendDeployment} already exists.
-     */
-    FrontendDeployment registerFrontend(final String examCreationUrl, final String examTakingUrlTemplate)
-            throws IllegalArgumentException, UniqueViolationException;
-
-    /**
-     * Removes the current {@link FrontendDeployment}.
-     *
-     * @apiNote This is an idempotent operation.
-     */
-    void unregisterFrontend();
 }

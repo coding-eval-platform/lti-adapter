@@ -1,5 +1,6 @@
 package ar.edu.itba.cep.lti_service.domain.config;
 
+import ar.edu.itba.cep.security.EnableKeyFactory;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
@@ -10,5 +11,6 @@ import org.springframework.context.annotation.Configuration;
 @ComponentScan(basePackages = {
         "ar.edu.itba.cep.lti_service.domain"
 })
+@EnableKeyFactory
 public class DomainConfig {
 }

@@ -25,5 +25,11 @@
             <artifactId>lti-service-models</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+
+        <!-- Third party libraries -->
+        <dependency>
+            <groupId>com.bellotapps.webapps</groupId>
+            <artifactId>webapps-commons-exceptions</artifactId>
+        </dependency>
     </dependencies>
 </project>

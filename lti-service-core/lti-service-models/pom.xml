@@ -25,6 +25,12 @@
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
 
+        <!-- Commons keys -->
+        <dependency>
+            <groupId>ar.edu.itba.cep</groupId>
+            <artifactId>commons-keys</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

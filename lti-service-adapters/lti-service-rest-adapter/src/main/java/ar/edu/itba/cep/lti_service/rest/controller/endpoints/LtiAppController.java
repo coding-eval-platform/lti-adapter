@@ -1,8 +1,14 @@
 package ar.edu.itba.cep.lti_service.rest.controller.endpoints;
 
+import ar.edu.itba.cep.lti.LtiService;
+import ar.edu.itba.cep.lti.constants.Paths;
+import ar.edu.itba.cep.lti.dtos.*;
 import com.bellotapps.webapps_commons.config.JerseyController;
+import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.GET;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -10,28 +16,61 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 /**
- * Controller in charge of providing endpoints to allow LTI integration.
+ * Rest Adapter of {@link LtiService}, providing endpoints to allow LTI integration.
  */
 @Path("lti/app")
 @Produces(MediaType.APPLICATION_JSON)
 @JerseyController
+@AllArgsConstructor
 public class LtiAppController {
 
-    @GET
-    @Path("init-login")
-    public Response login() {
-        return Response.noContent().build();
+    /**
+     * The {@link Logger}.
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(LtiAppController.class);
+
+    /**
+     * The {@link LtiService} to which the requests will be delegated.
+     */
+    private final LtiService ltiService;
+
+
+    @POST
+    @Path(Paths.LOGIN_INITIATION_PATH)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response loginInit(final LoginInitiationRequestDto dto) {
+        LOGGER.debug(
+                "Login initiation request for issuer {}, with client id {}, and deployment id {}",
+                dto.getIssuer(),
+                dto.getClientId(),
+                dto.getDeploymentId()
+        );
+        final var authenticationRequest = ltiService.loginInitiation(dto.toModel());
+        return Response.ok(AuthenticationRequestDto.fromModel(authenticationRequest)).build();
     }
 
     @POST
-    @Path("take-exam")
-    public Response startExam() {
-        return Response.noContent().build();
+    @Path(Paths.EXAM_SELECTION_PATH)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response examSelection(final AuthenticationResponseDto dto) {
+        LOGGER.debug("Authentication response to select an exam");
+        final var examSelectionResponse = ltiService.examSelection(dto.toModel());
+        return Response.ok(ExamSelectionResponseDto.fromModel(examSelectionResponse)).build();
     }
 
     @POST
-    @Path("create-exam")
-    public Response createExam() {
-        return Response.noContent().build();
+    @Path(Paths.EXAM_SELECTED_PATH)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response examSelected(final ExamSelectedRequestDto dto) {
+        LOGGER.debug("Exam selected request for exam with id {}", dto.getExamId());
+        final var response = ltiService.examSelected(dto.toModel());
+        return Response.ok(ExamSelectedResponseDto.fromModel(response)).build();
+    }
+
+    @POST
+    @Path(Paths.EXAM_TAKING_PATH)
+    public Response startExam(final AuthenticationResponseDto dto) {
+        final var examTakingResponse = ltiService.takeExam(dto.toModel());
+        return Response.ok(ExamTakingResponseDto.fromModel(examTakingResponse)).build();
     }
 }

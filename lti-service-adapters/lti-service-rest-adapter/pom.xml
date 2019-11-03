@@ -25,7 +25,22 @@
             <version>${project.parent.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>ar.edu.itba.cep</groupId>
+            <artifactId>commons-lti-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ar.edu.itba.cep</groupId>
+            <artifactId>commons-lti-shared</artifactId>
+        </dependency>
+
         <!-- Third party libraries-->
+        <!-- Commons keys -->
+        <dependency>
+            <groupId>ar.edu.itba.cep</groupId>
+            <artifactId>commons-keys</artifactId>
+        </dependency>
+
         <!-- Spring Boot Jersey Starter -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

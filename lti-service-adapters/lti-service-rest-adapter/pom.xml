@@ -35,6 +35,12 @@
         </dependency>
 
         <!-- Third party libraries-->
+        <!-- Commons keys -->
+        <dependency>
+            <groupId>ar.edu.itba.cep</groupId>
+            <artifactId>commons-keys</artifactId>
+        </dependency>
+
         <!-- Spring Boot Jersey Starter -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

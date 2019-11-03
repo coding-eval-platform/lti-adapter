@@ -1,16 +1,18 @@
-package ar.edu.itba.cep.lti_service.repositories;
+package ar.edu.itba.cep.lti_service.spring_data.interfaces;
 
 import ar.edu.itba.cep.lti_service.models.ToolDeployment;
-import com.bellotapps.webapps_commons.persistence.repository_utils.repositories.BasicRepository;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
- * A port out of the application that allows {@link ToolDeployment} persistence.
+ * A {@link CrudRepository} for {@link ToolDeployment}s.
  */
-public interface ToolDeploymentRepository extends BasicRepository<ToolDeployment, UUID> {
+@Repository
+public interface SpringDataToolDeploymentRepository extends CrudRepository<ToolDeployment, UUID> {
 
     /**
      * Retrieves all the {@link ToolDeployment}s matching the given {@code issuer}.
@@ -18,7 +20,7 @@ public interface ToolDeploymentRepository extends BasicRepository<ToolDeployment
      * @param issuer The issuer.
      * @return A {@link List} of {@link ToolDeployment}s matching the given {@code issuer}.
      */
-    List<ToolDeployment> find(final String issuer);
+    List<ToolDeployment> findByIssuer(final String issuer);
 
     /**
      * Retrieves all the {@link ToolDeployment}s matching the given {@code clientId} and {@code issuer}.
@@ -30,7 +32,7 @@ public interface ToolDeploymentRepository extends BasicRepository<ToolDeployment
      * @param issuer   The issuer.
      * @return A {@link List} of {@link ToolDeployment}s matching the given {@code clientId} and {@code issuer}.
      */
-    List<ToolDeployment> find(final String clientId, final String issuer);
+    List<ToolDeployment> findByClientIdAndIssuer(final String clientId, final String issuer);
 
     /**
      * Retrieves the {@link ToolDeployment}
@@ -43,7 +45,11 @@ public interface ToolDeploymentRepository extends BasicRepository<ToolDeployment
      * @return An {@link Optional} containing the {@link ToolDeployment} matching the given arguments if it exists,
      * or empty otherwise.
      */
-    Optional<ToolDeployment> find(final String deploymentId, final String clientId, final String issuer);
+    Optional<ToolDeployment> findByDeploymentIdAndClientIdAndIssuer(
+            final String deploymentId,
+            final String clientId,
+            final String issuer
+    );
 
     /**
      * Indicates whether a {@link ToolDeployment} exists
@@ -54,5 +60,9 @@ public interface ToolDeploymentRepository extends BasicRepository<ToolDeployment
      * @param issuer       The issuer.
      * @return {@code true} if there is a matching {@link ToolDeployment}, or {@code false} otherwise.
      */
-    boolean exists(final String deploymentId, final String clientId, final String issuer);
+    boolean existsByDeploymentIdAndClientIdAndIssuer(
+            final String deploymentId,
+            final String clientId,
+            final String issuer
+    );
 }

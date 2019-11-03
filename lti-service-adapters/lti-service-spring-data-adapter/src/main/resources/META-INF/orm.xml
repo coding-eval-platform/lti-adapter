@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-mappings
+        xmlns="http://xmlns.jcp.org/xml/ns/persistence/orm"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence/orm http://xmlns.jcp.org/xml/ns/persistence/orm_2_2.xsd"
+        version="2.2">
+
+    <package>ar.edu.itba.cep.lti_service.models</package>
+
+    <entity class="ToolDeployment" access="FIELD">
+        <table name="tool_deployments"/>
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" updatable="false"/>
+                <generated-value strategy="AUTO"/>
+            </id>
+            <basic name="deploymentId">
+                <column name="deployment_id" nullable="false" insertable="true" updatable="false"/>
+            </basic>
+            <basic name="clientId">
+                <column name="client_id" nullable="false" insertable="true" updatable="false"/>
+            </basic>
+            <basic name="issuer">
+                <column name="issuer" nullable="false" insertable="true" updatable="false"/>
+            </basic>
+            <basic name="oidcAuthenticationEndpoint">
+                <column name="oidc_authentication_endpoint" nullable="false" insertable="true" updatable="false"/>
+            </basic>
+            <basic name="jwksEndpoint">
+                <column name="jwks_endpoint" nullable="false" insertable="true" updatable="false"/>
+            </basic>
+            <basic name="privateKey">
+                <column name="private_key" nullable="false" insertable="true" updatable="false"/>
+            </basic>
+            <basic name="signatureAlgorithm">
+                <column name="signature_algorithm" nullable="false" insertable="true" updatable="false"/>
+                <enumerated>STRING</enumerated>
+            </basic>
+        </attributes>
+    </entity>
+
+    <entity class="ExamTaking" access="FIELD">
+        <table name="exam_takings"/>
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" updatable="false"/>
+                <generated-value strategy="AUTO"/>
+            </id>
+            <basic name="examId">
+                <column name="exam_id" nullable="false" insertable="true" updatable="false"/>
+            </basic>
+            <basic name="subject">
+                <column name="subject" nullable="false" insertable="true" updatable="false"/>
+            </basic>
+            <basic name="lineItemUrl">
+                <column name="line_item_url" nullable="false" insertable="true" updatable="false"/>
+            </basic>
+            <many-to-one name="toolDeployment" fetch="LAZY" optional="false">
+                <join-column name="tool_deployment_id"
+                             referenced-column-name="id" nullable="false" insertable="true" updatable="false"/>
+            </many-to-one>
+        </attributes>
+    </entity>
+</entity-mappings>

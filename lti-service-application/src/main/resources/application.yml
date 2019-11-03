@@ -11,6 +11,20 @@ spring:
     servlet:
       load-on-startup: 1
 
+  flyway:
+    locations: "classpath:db/migrations"
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        show_sql: false
+        format_sql: false
+        jdbc:
+          lob:
+            non_contextual_creation: true
+    open-in-view: false
 
 server:
   port: 8000
@@ -38,6 +52,11 @@ spring:
   profiles:
     - dev
     - development
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/coding-eval-platform__lti-service
+    username: coding-eval-platform__lti-service
+    password: coding-eval-platform__lti-service
 
 eureka:
   client:

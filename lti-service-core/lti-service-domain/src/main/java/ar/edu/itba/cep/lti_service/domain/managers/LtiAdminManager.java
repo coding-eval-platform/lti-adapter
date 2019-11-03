@@ -7,8 +7,8 @@ import com.bellotapps.webapps_commons.errors.UniqueViolationError;
 import com.bellotapps.webapps_commons.exceptions.UniqueViolationException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
 
-import java.security.PrivateKey;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,6 +19,7 @@ import java.util.stream.StreamSupport;
  * Manager in charge of providing services that allows configuring the LTI behaviour
  * (i.e allow registering {@link ToolDeployment}s).
  */
+@Service
 @AllArgsConstructor
 public class LtiAdminManager implements LtiAdminService {
 
@@ -69,7 +70,7 @@ public class LtiAdminManager implements LtiAdminService {
             final String issuer,
             final String oidcAuthenticationEndpoint,
             final String jwksEndpoint,
-            final PrivateKey privateKey,
+            final String privateKey,
             final SignatureAlgorithm signatureAlgorithm) throws IllegalArgumentException, UniqueViolationException {
         // First check if there is a tool deployment for the given deploymentId, clientId and issuer.
         if (toolDeploymentRepository.exists(deploymentId, clientId, issuer)) {

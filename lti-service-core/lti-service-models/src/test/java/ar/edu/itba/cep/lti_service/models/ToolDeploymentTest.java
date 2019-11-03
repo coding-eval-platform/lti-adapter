@@ -4,33 +4,17 @@ import com.github.javafaker.Faker;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.util.Base64;
 import java.util.UUID;
 
 /**
  * Test class for {@link ToolDeployment}.
  */
-@ExtendWith(MockitoExtension.class)
 class ToolDeploymentTest {
-
-    /**
-     * A {@link PrivateKey} to be passed to the {@link ToolDeployment} constructor.
-     */
-    private final PrivateKey privateKey;
-
-
-    /**
-     * Constructor.
-     *
-     * @param privateKey A mocked {@link PrivateKey}.
-     */
-    ToolDeploymentTest(@Mock(name = "privateKey") final PrivateKey privateKey) {
-        this.privateKey = privateKey;
-    }
 
 
     // ================================================================================================================
@@ -41,13 +25,14 @@ class ToolDeploymentTest {
      * Tests the creation of a {@link ToolDeployment} instance.
      */
     @Test
-    void testCreation() {
+    void testCreation() throws NoSuchAlgorithmException {
         final var deploymentId = deploymentId();
         final var clientId = clientId();
         final var issuer = issuer();
         final var oidcAuthenticationEndpoint = oidcAuthenticationEndpoint();
         final var jwksEndpoint = jwksEndpoint();
         final var algorithm = signatureAlgorithm();
+        final var privateKey = privateKey(algorithm);
 
         final var toolDeployment = new ToolDeployment(
                 deploymentId,
@@ -94,6 +79,7 @@ class ToolDeploymentTest {
      */
     @Test
     void testNullDeploymentId() {
+        final var algorithm = signatureAlgorithm();
         Assertions.assertThrows(
                 IllegalArgumentException.class,
                 () -> new ToolDeployment(
@@ -102,8 +88,8 @@ class ToolDeploymentTest {
                         issuer(),
                         oidcAuthenticationEndpoint(),
                         jwksEndpoint(),
-                        privateKey,
-                        signatureAlgorithm()
+                        privateKey(algorithm),
+                        algorithm
                 ),
                 "Creating a ToolDeployment with a null deployment id is being allowed"
         );
@@ -115,6 +101,7 @@ class ToolDeploymentTest {
      */
     @Test
     void testNullClientId() {
+        final var algorithm = signatureAlgorithm();
         Assertions.assertThrows(
                 IllegalArgumentException.class,
                 () -> new ToolDeployment(
@@ -123,8 +110,8 @@ class ToolDeploymentTest {
                         issuer(),
                         oidcAuthenticationEndpoint(),
                         jwksEndpoint(),
-                        privateKey,
-                        signatureAlgorithm()
+                        privateKey(algorithm),
+                        algorithm
                 ),
                 "Creating a ToolDeployment with a null client id is being allowed"
         );
@@ -136,6 +123,7 @@ class ToolDeploymentTest {
      */
     @Test
     void testNullIssuer() {
+        final var algorithm = signatureAlgorithm();
         Assertions.assertThrows(
                 IllegalArgumentException.class,
                 () -> new ToolDeployment(
@@ -144,8 +132,8 @@ class ToolDeploymentTest {
                         null,
                         oidcAuthenticationEndpoint(),
                         jwksEndpoint(),
-                        privateKey,
-                        signatureAlgorithm()
+                        privateKey(algorithm),
+                        algorithm
                 ),
                 "Creating a ToolDeployment with a null issuer is being allowed"
         );
@@ -157,6 +145,7 @@ class ToolDeploymentTest {
      */
     @Test
     void testNullOidcAuthenticationEndpoint() {
+        final var algorithm = signatureAlgorithm();
         Assertions.assertThrows(
                 IllegalArgumentException.class,
                 () -> new ToolDeployment(
@@ -165,8 +154,8 @@ class ToolDeploymentTest {
                         issuer(),
                         null,
                         jwksEndpoint(),
-                        privateKey,
-                        signatureAlgorithm()
+                        privateKey(algorithm),
+                        algorithm
                 ),
                 "Creating a ToolDeployment with a null Open-Id Connection authentication endpoint id is being allowed"
         );
@@ -178,6 +167,7 @@ class ToolDeploymentTest {
      */
     @Test
     void testNullJwksEndpoint() {
+        final var algorithm = signatureAlgorithm();
         Assertions.assertThrows(
                 IllegalArgumentException.class,
                 () -> new ToolDeployment(
@@ -186,8 +176,8 @@ class ToolDeploymentTest {
                         issuer(),
                         oidcAuthenticationEndpoint(),
                         null,
-                        privateKey,
-                        signatureAlgorithm()
+                        privateKey(algorithm),
+                        algorithm
                 ),
                 "Creating a ToolDeployment with a null JWKS endpoint is being allowed"
         );
@@ -228,7 +218,7 @@ class ToolDeploymentTest {
                         issuer(),
                         oidcAuthenticationEndpoint(),
                         jwksEndpoint(),
-                        privateKey,
+                        privateKey(SignatureAlgorithm.RS512),
                         null
                 ),
                 "Creating a ToolDeployment with a null Signature algorithm is being allowed"
@@ -273,6 +263,17 @@ class ToolDeploymentTest {
      */
     private static String jwksEndpoint() {
         return "https://" + Faker.instance().internet().domainName() + "/jwks";
+    }
+
+    /**
+     * @return A random {@link String} to be passed as a private key.
+     */
+    private static String privateKey(final SignatureAlgorithm algorithm) throws NoSuchAlgorithmException {
+        final var generator = KeyPairGenerator.getInstance(algorithm.getFamilyName());
+        generator.initialize(2048);
+        final var pair = generator.generateKeyPair();
+        final var encoded = pair.getPrivate().getEncoded();
+        return Base64.getEncoder().encodeToString(encoded);
     }
 
     /**

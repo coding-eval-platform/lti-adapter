@@ -11,7 +11,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -166,12 +169,13 @@ public class LtiAdminManagerTest {
      * issuer, client id and deployment id (i.e the {@link ToolDeployment} is created, saved and returned).
      */
     @Test
-    void testToolDeploymentRegistration(@Mock(name = "privateKey") final PrivateKey privateKey) {
+    void testToolDeploymentRegistration() throws NoSuchAlgorithmException {
         final var deploymentId = deploymentId();
         final var clientId = clientId();
         final var issuer = issuer();
         final var oidcAuthenticationEndpoint = oidcAuthenticationEndpoint();
         final var jwksEndpoint = jwksEndpoint();
+        final var algorithm = signatureAlgorithm();
         when(toolDeploymentRepository.exists(deploymentId, clientId, issuer)).thenReturn(false);
         when(toolDeploymentRepository.save(any(ToolDeployment.class))).then(i -> i.getArgument(0));
 
@@ -181,7 +185,7 @@ public class LtiAdminManagerTest {
                 issuer,
                 oidcAuthenticationEndpoint,
                 jwksEndpoint,
-                privateKey,
+                privateKey(algorithm),
                 signatureAlgorithm()
         );
 
@@ -224,6 +228,7 @@ public class LtiAdminManagerTest {
         final var deploymentId = deploymentId();
         final var clientId = clientId();
         final var issuer = issuer();
+        final var algorithm = signatureAlgorithm();
         when(toolDeploymentRepository.exists(deploymentId, clientId, issuer)).thenReturn(true);
 
         Assertions.assertThrows(
@@ -234,7 +239,7 @@ public class LtiAdminManagerTest {
                         issuer,
                         oidcAuthenticationEndpoint(),
                         jwksEndpoint(),
-                        privateKey,
+                        privateKey(algorithm),
                         signatureAlgorithm()
                 ),
                 "Registration of a Tool Deployment with a given deployment id, client id and issuer" +
@@ -323,6 +328,17 @@ public class LtiAdminManagerTest {
      */
     private static String jwksEndpoint() {
         return "https://" + Faker.instance().internet().domainName() + "/jwks";
+    }
+
+    /**
+     * @return A random {@link String} to be passed as a private key.
+     */
+    private static String privateKey(final SignatureAlgorithm algorithm) throws NoSuchAlgorithmException {
+        final var generator = KeyPairGenerator.getInstance(algorithm.getFamilyName());
+        generator.initialize(2048);
+        final var pair = generator.generateKeyPair();
+        final var encoded = pair.getPrivate().getEncoded();
+        return Base64.getEncoder().encodeToString(encoded);
     }
 
     /**

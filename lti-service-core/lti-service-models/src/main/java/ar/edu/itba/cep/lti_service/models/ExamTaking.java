@@ -6,7 +6,7 @@ import org.springframework.util.Assert;
 import java.util.UUID;
 
 /**
- * Created by Juan Marcos Bellini on 2019-10-31.
+ * Represents an exam being taken by a subject (i.e a user of an LMS).
  */
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)

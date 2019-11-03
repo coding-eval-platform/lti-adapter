@@ -1,10 +1,13 @@
 package ar.edu.itba.cep.lti_service.models;
 
+import ar.edu.itba.cep.security.KeyHelper;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.*;
 import org.springframework.util.Assert;
 
-import java.security.PrivateKey;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.UUID;
 
 /**
@@ -41,9 +44,9 @@ public class ToolDeployment {
      */
     private final String jwksEndpoint;
     /**
-     * The {@link PrivateKey} needed to sign messages sent to the platform.
+     * The private key needed to sign messages sent to the platform (base64 encoded).
      */
-    private final PrivateKey privateKey;
+    private final String privateKey;
     /**
      * The {@link SignatureAlgorithm}.
      */
@@ -58,7 +61,7 @@ public class ToolDeployment {
      * @param issuer                     The issuing authority.
      * @param oidcAuthenticationEndpoint Endpoint to which the user agent is redirected after a login initiation request.
      * @param jwksEndpoint               Endpoint at which the platform's public keys can be found.
-     * @param privateKey                 The {@link PrivateKey} needed to sign messages sent to the platform.
+     * @param privateKey                 The private key needed to sign messages sent to the platform (base64 encoded).
      * @param signatureAlgorithm         The {@link SignatureAlgorithm}.
      * @throws IllegalArgumentException In case any value is not a valid one.
      */
@@ -68,7 +71,7 @@ public class ToolDeployment {
             final String issuer,
             final String oidcAuthenticationEndpoint,
             final String jwksEndpoint,
-            final PrivateKey privateKey,
+            final String privateKey,
             final SignatureAlgorithm signatureAlgorithm) throws IllegalArgumentException {
         assertDeploymentId(deploymentId);
         assertClientId(clientId);
@@ -77,8 +80,9 @@ public class ToolDeployment {
         assertJwksEndpoint(jwksEndpoint);
         assertPrivateKey(privateKey);
         assertSignatureAlgorithm(signatureAlgorithm);
+        assertPrivateKeyAndAlgorithm(privateKey, signatureAlgorithm);
 
-        this.id = UUID.randomUUID(); // TODO: change to null
+        this.id = null;
         this.deploymentId = deploymentId;
         this.clientId = clientId;
         this.issuer = issuer;
@@ -92,6 +96,7 @@ public class ToolDeployment {
     // ================================
     // Assertions
     // ================================
+
 
     /**
      * Asserts that the given {@code deploymentId} is valid.
@@ -147,21 +152,43 @@ public class ToolDeployment {
     /**
      * Asserts that the given {@code privateKey} is valid.
      *
-     * @param privateKey The {@link PrivateKey} to be checked.
+     * @param privateKey The private key to be checked.
      * @throws IllegalArgumentException In case the private key is not valid.
      */
-    private static void assertPrivateKey(final PrivateKey privateKey) throws IllegalArgumentException {
+    private static void assertPrivateKey(final String privateKey) throws IllegalArgumentException {
         Assert.notNull(privateKey, "The private key must not be null");
     }
 
     /**
      * Asserts that the given {@code signatureAlgorithm} is valid.
      *
-     * @param signatureAlgorithm The {@link PrivateKey} to be checked.
+     * @param signatureAlgorithm The {@link SignatureAlgorithm} to be checked.
      * @throws IllegalArgumentException In case the signatureAlgorithm is not valid.
      */
     private static void assertSignatureAlgorithm(final SignatureAlgorithm signatureAlgorithm)
             throws IllegalArgumentException {
         Assert.notNull(signatureAlgorithm, "The signatureAlgorithm must not be null");
+    }
+
+    /**
+     * Asserts that both the {@code privateKey} and {@code algorithm} can work together.
+     *
+     * @param privateKey The private key to be checked.
+     * @param algorithm  The {@link SignatureAlgorithm} to be checked.
+     * @throws IllegalArgumentException If they are not compatible.
+     * @throws IllegalStateException    If a {@link KeyFactory} cannot be instantiated for the given {@code algorithm}.
+     */
+    public static void assertPrivateKeyAndAlgorithm(final String privateKey, final SignatureAlgorithm algorithm)
+            throws IllegalArgumentException, IllegalStateException {
+        try {
+            final var keyFactory = KeyFactory.getInstance(algorithm.getFamilyName());
+            KeyHelper.generateKey(
+                    keyFactory, privateKey, PKCS8EncodedKeySpec::new, KeyFactory::generatePrivate
+            );
+        } catch (final KeyHelper.InvalidKeyException e) {
+            throw new IllegalArgumentException("The given private key is invalid");
+        } catch (final NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Cannot create a KeyFactory for algorithm " + algorithm);
+        }
     }
 }

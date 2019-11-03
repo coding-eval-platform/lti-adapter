@@ -14,6 +14,7 @@ import ar.edu.itba.cep.lti_service.repositories.ToolDeploymentRepository;
 import ar.edu.itba.cep.roles.Role;
 import com.bellotapps.webapps_commons.exceptions.NoSuchEntityException;
 import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,6 +24,7 @@ import static ar.edu.itba.cep.lti_service.domain.helpers.LtiDeepLinkingRequestHe
 /**
  * Manager in charge of providing services that allows LTI 1.3 interaction.
  */
+@Service
 @AllArgsConstructor
 public class LtiAppManager implements LtiService {
 

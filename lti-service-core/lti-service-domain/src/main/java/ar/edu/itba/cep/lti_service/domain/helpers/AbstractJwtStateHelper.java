@@ -27,7 +27,7 @@ public abstract class AbstractJwtStateHelper<S, J extends AbstractJwtStateHelper
     /**
      * Signature algorithm used to sign the jwt.
      */
-    private static final SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.RS512;
+    public static final SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.RS512;
 
 
     /**

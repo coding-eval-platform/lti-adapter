@@ -6,6 +6,8 @@ import ar.edu.itba.cep.lti_service.domain.helpers.LtiStateHelper;
 import ar.edu.itba.cep.security.KeyHelper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -13,6 +15,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -25,6 +28,8 @@ import java.security.spec.X509EncodedKeySpec;
 @Configuration
 @EnableConfigurationProperties(JwtStateHelperConfig.JwtStateHelperProperties.class)
 public class JwtStateHelperConfig {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(JwtStateHelperConfig.class);
 
     /**
      * Builds an {@link LtiStateHelper} bean.
@@ -56,17 +61,16 @@ public class JwtStateHelperConfig {
 
 
     /**
-     * Builds a {@link PublicKey} from the given {@code keyFactory} and {@code encoded} {@link String}
-     * representation of the key.
+     * Builds a {@link PublicKey} from the given {@code encoded} {@link String} representation of the key.
      *
-     * @param keyFactory The {@link KeyFactory} used to create the {@link PublicKey}.
      * @param properties The {@link JwtStateHelperProperties} from where the encoded public key is taken.
      * @return The created {@link PublicKey}.
      */
     @Bean
     @Qualifier(value = "state-helper-public-key")
-    public PublicKey publicKey(final KeyFactory keyFactory, final JwtStateHelperProperties properties) {
-        return KeyHelper.generateKey(keyFactory,
+    public PublicKey publicKey(final JwtStateHelperProperties properties) {
+        return KeyHelper.generateKey(
+                getKeyFactory(),
                 properties.getPublicKey(),
                 X509EncodedKeySpec::new,
                 KeyFactory::generatePublic
@@ -74,22 +78,38 @@ public class JwtStateHelperConfig {
     }
 
     /**
-     * Builds a {@link PrivateKey} from the given {@code keyFactory} and {@code encoded} {@link String}
-     * representation of the key.
+     * Builds a {@link PrivateKey} from the given {@code encoded} {@link String} representation of the key.
      *
-     * @param keyFactory The {@link KeyFactory} used to create the {@link PrivateKey}.
      * @param properties The {@link JwtStateHelperProperties} from where the encoded private key is taken.
      * @return The created {@link PrivateKey}.
      */
     @Bean
     @Qualifier(value = "state-helper-private-key")
-    public PrivateKey privateKey(final KeyFactory keyFactory, final JwtStateHelperProperties properties) {
+    public PrivateKey privateKey(final JwtStateHelperProperties properties) {
         return KeyHelper.generateKey(
-                keyFactory,
+                getKeyFactory(),
                 properties.getPrivateKey(),
                 PKCS8EncodedKeySpec::new,
                 KeyFactory::generatePrivate
         );
+    }
+
+
+    /**
+     * Retrieves a {@link KeyFactory} instance for the {@link AbstractJwtStateHelper#SIGNATURE_ALGORITHM} algorithm.
+     *
+     * @return The said {@link KeyFactory}.
+     */
+    private static KeyFactory getKeyFactory() {
+        final var algorithm = AbstractJwtStateHelper.SIGNATURE_ALGORITHM.getFamilyName();
+        try {
+            return KeyFactory.getInstance(algorithm);
+        } catch (final NoSuchAlgorithmException e) {
+            LOGGER.error("Cannot get KeyFactory for algorithm {}", algorithm);
+            LOGGER.debug("NoSuchAlgorithmException message {}", e.getMessage());
+            LOGGER.trace("Stacktrace: ", e);
+            throw new RuntimeException("Cannot get a KeyFactory instance for algorithm " + algorithm);
+        }
     }
 
 

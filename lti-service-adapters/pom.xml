@@ -19,6 +19,7 @@
     </properties>
 
     <modules>
+        <module>lti-service-external-cep-services-rest-adapter</module>
         <module>lti-service-rest-adapter</module>
         <module>lti-service-spring-data-adapter</module>
     </modules>

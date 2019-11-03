@@ -3,12 +3,10 @@ package ar.edu.itba.cep.lti_service.external_cep_services.tokens_service;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
-import java.time.Instant;
 import java.util.UUID;
 
 /**
- * A Data Transfer Object that wraps token data, including its id, its expiration {@link Instant},
- * the {@link String} representation, and a refresh token.
+ * Represents the information received from the tokens service when a token is requested.
  */
 @Value
 @EqualsAndHashCode(of = "id", doNotUseGetters = true)

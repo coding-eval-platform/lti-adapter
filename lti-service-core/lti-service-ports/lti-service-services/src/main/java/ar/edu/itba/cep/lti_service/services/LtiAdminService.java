@@ -76,6 +76,10 @@ public interface LtiAdminService {
      * @param jwksEndpoint               Endpoint at which the platform's public keys can be found.
      * @param privateKey                 The private key needed to sign messages sent to the platform (base64 encoded).
      * @param signatureAlgorithm         The {@link SignatureAlgorithm}.
+     * @param applicationKey             The tool deployment key
+     *                                   (used for OAuth2 Client Credentials grant type request).
+     * @param applicationSecret          The tool deployment secret
+     *                                   (used for OAuth2 Client Credentials grant type request).
      * @return The created {@link ToolDeployment}.
      * @throws IllegalArgumentException In case any value is not a valid one.
      * @throws UniqueViolationException If a {@link ToolDeployment} already exists for the given
@@ -88,7 +92,9 @@ public interface LtiAdminService {
             final String oidcAuthenticationEndpoint,
             final String jwksEndpoint,
             final String privateKey,
-            final SignatureAlgorithm signatureAlgorithm) throws IllegalArgumentException, UniqueViolationException;
+            final SignatureAlgorithm signatureAlgorithm,
+            final String applicationKey,
+            final String applicationSecret) throws IllegalArgumentException, UniqueViolationException;
 
     /**
      * Removes the {@link ToolDeployment} with the given {@code id}

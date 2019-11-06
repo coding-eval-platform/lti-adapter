@@ -10,7 +10,7 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>lti-service-services</artifactId>
+    <artifactId>lti-service-external-lti-web-services</artifactId>
     <name>${project.groupId}:${project.artifactId}</name>
     <packaging>jar</packaging>
 
@@ -31,9 +31,12 @@
             <groupId>com.bellotapps.webapps</groupId>
             <artifactId>webapps-commons-exceptions</artifactId>
         </dependency>
+
+        <!-- Lombok -->
         <dependency>
-            <groupId>ar.edu.itba.cep</groupId>
-            <artifactId>commons-lti-api</artifactId>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

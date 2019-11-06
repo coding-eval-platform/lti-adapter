@@ -111,7 +111,9 @@ public class LtiAdminToolDeploymentController {
                 dto.getOidcAuthenticationEndpoint(),
                 dto.getJwksEndpoint(),
                 dto.getPrivateKey(),
-                dto.getSignatureAlgorithm()
+                dto.getSignatureAlgorithm(),
+                dto.getApplicationKey(),
+                dto.getApplicationSecret()
         );
         final var location = uriInfo.getAbsolutePathBuilder().path(toolDeployment.getId().toString()).build();
         return Response.created(location).build();

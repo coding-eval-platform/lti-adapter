@@ -7,14 +7,17 @@ import ar.edu.itba.cep.lti_service.domain.helpers.LtiDeepLinkingResponseHelper.L
 import ar.edu.itba.cep.lti_service.external_cep_services.evaluations_service.EvaluationsService;
 import ar.edu.itba.cep.lti_service.external_cep_services.evaluations_service.Exam;
 import ar.edu.itba.cep.lti_service.external_cep_services.tokens_service.TokensService;
+import ar.edu.itba.cep.lti_service.external_lti_web_services.LtiAssignmentAndGradeServicesClient;
 import ar.edu.itba.cep.lti_service.models.ExamTaking;
 import ar.edu.itba.cep.lti_service.models.ToolDeployment;
 import ar.edu.itba.cep.lti_service.repositories.ExamTakingRepository;
 import ar.edu.itba.cep.lti_service.repositories.ToolDeploymentRepository;
+import ar.edu.itba.cep.lti_service.services.LtiService;
 import ar.edu.itba.cep.roles.Role;
 import com.bellotapps.webapps_commons.exceptions.NoSuchEntityException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,6 +29,7 @@ import static ar.edu.itba.cep.lti_service.domain.helpers.LtiDeepLinkingRequestHe
  */
 @Service
 @AllArgsConstructor
+@Transactional(readOnly = true)
 public class LtiAppManager implements LtiService {
 
     private static final String EXAM_ID_CUSTOM = "exam-id";
@@ -48,6 +52,8 @@ public class LtiAppManager implements LtiService {
 
     private final EvaluationsService evaluationsService;
     private final TokensService tokensService;
+
+    private final LtiAssignmentAndGradeServicesClient ltiAssignmentAndGradeServicesClient;
 
 
     @Override
@@ -99,9 +105,22 @@ public class LtiAppManager implements LtiService {
     }
 
     @Override
+    @Transactional
     public ExamTakingResponse takeExam(final AuthenticationResponse authenticationResponse) {
         return this.handleAuthenticationResponse(authenticationResponse, this::takeExam);
     }
+
+    @Override
+    @Transactional
+    public void scoreExam(final ExamScoringRequest request) {
+        examTakingRepository.get(request.getExamId(), request.getSubject()).ifPresentOrElse(
+                examTaking -> ltiAssignmentAndGradeServicesClient.publishScore(examTaking, request.getScore()),
+                () -> {
+                    throw new RuntimeException("No Exam Taking with the given arguments"); // TODO: define new exception?
+                }
+        );
+    }
+
 
     // ================================================================================================================
     // Helpers
@@ -219,6 +238,10 @@ public class LtiAppManager implements LtiService {
                     }
                 })
                 .orElseThrow(() -> new RuntimeException("Missing exam id"));
+        final var exam = evaluationsService.getExamById(examId)
+                .orElseThrow(() -> new RuntimeException("Could not retrieve the exam. Maybe was deleted?")); // TODO: define new exception?
+
+
         final var userId = Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.SUBJECT))
                 .filter(String.class::isInstance)
                 .map(String.class::cast)
@@ -227,7 +250,10 @@ public class LtiAppManager implements LtiService {
         if (lineItemUrl == null) {
             throw new RuntimeException("Missing lineitem capability"); // TODO: define new exception?
         }
-        examTakingRepository.save(ExamTaking.withoutId(examId, userId, lineItemUrl, toolDeployment));
+        if (!examTakingRepository.exists(examId, userId)) {
+            final var examTaking = ExamTaking.withoutId(examId, userId, lineItemUrl, exam.getMaxScore(), toolDeployment);
+            examTakingRepository.save(examTaking);
+        }
 
         // Then get other needed stuff for the response.
         final var tokenData = tokensService.tokenFor(userId, Set.of(Role.STUDENT))

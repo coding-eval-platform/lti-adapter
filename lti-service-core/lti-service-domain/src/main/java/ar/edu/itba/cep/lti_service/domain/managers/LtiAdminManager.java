@@ -8,6 +8,7 @@ import com.bellotapps.webapps_commons.exceptions.UniqueViolationException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,16 +22,13 @@ import java.util.stream.StreamSupport;
  */
 @Service
 @AllArgsConstructor
+@Transactional(readOnly = true)
 public class LtiAdminManager implements LtiAdminService {
 
     /**
      * A {@link ToolDeploymentRepository}.
      */
     private final ToolDeploymentRepository toolDeploymentRepository;
-//    /**
-//     * A {@link KeyFactory} used to
-//     */
-//    private final KeyFactory keyFactory;
 
 
     // ================================================================================================================
@@ -64,6 +62,7 @@ public class LtiAdminManager implements LtiAdminService {
     }
 
     @Override
+    @Transactional
     public ToolDeployment registerToolDeployment(
             final String deploymentId,
             final String clientId,
@@ -71,7 +70,9 @@ public class LtiAdminManager implements LtiAdminService {
             final String oidcAuthenticationEndpoint,
             final String jwksEndpoint,
             final String privateKey,
-            final SignatureAlgorithm signatureAlgorithm) throws IllegalArgumentException, UniqueViolationException {
+            final SignatureAlgorithm signatureAlgorithm,
+            final String applicationKey,
+            final String applicationSecret) throws IllegalArgumentException, UniqueViolationException {
         // First check if there is a tool deployment for the given deploymentId, clientId and issuer.
         if (toolDeploymentRepository.exists(deploymentId, clientId, issuer)) {
             throw new UniqueViolationException(List.of(TOOL_DEPLOYMENT_ALREADY_EXISTS));
@@ -85,12 +86,15 @@ public class LtiAdminManager implements LtiAdminService {
                 oidcAuthenticationEndpoint,
                 jwksEndpoint,
                 privateKey,
-                signatureAlgorithm
+                signatureAlgorithm,
+                applicationKey,
+                applicationSecret
         );
         return toolDeploymentRepository.save(toolDeployment);
     }
 
     @Override
+    @Transactional
     public void unregisterToolDeployment(final UUID id) {
         if (toolDeploymentRepository.existsById(id)) {
             toolDeploymentRepository.deleteById(id);

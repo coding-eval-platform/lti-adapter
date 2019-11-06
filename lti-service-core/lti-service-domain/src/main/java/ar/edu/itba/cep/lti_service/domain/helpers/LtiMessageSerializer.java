@@ -41,11 +41,11 @@ public class LtiMessageSerializer {
 
 
     /**
-     * Transforms the given {@code encoded} {@link String} into a {@link PrivateKey}.
+     * Builds the corresponding {@link PrivateKey} for the given {@code toolDeployment}.
      *
      * @param toolDeployment The {@link ToolDeployment} representing the integration between this tool and the LMS.
      *                       The base64 encoded key and the signature algorithm will be taken from here.
-     * @return Tthe corresponding {@link PrivateKey}.
+     * @return The corresponding {@link PrivateKey}.
      */
     private PrivateKey privateKey(final ToolDeployment toolDeployment) {
         try {

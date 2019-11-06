@@ -36,6 +36,12 @@
                 <column name="signature_algorithm" nullable="false" insertable="true" updatable="false"/>
                 <enumerated>STRING</enumerated>
             </basic>
+            <basic name="applicationKey">
+                <column name="application_key" nullable="false" insertable="true" updatable="false"/>
+            </basic>
+            <basic name="applicationSecret">
+                <column name="application_secret" nullable="false" insertable="true" updatable="false"/>
+            </basic>
         </attributes>
     </entity>
 
@@ -54,6 +60,9 @@
             </basic>
             <basic name="lineItemUrl">
                 <column name="line_item_url" nullable="false" insertable="true" updatable="false"/>
+            </basic>
+            <basic name="maxScore">
+                <column name="max_score" nullable="false" insertable="true" updatable="false"/>
             </basic>
             <many-to-one name="toolDeployment" fetch="LAZY" optional="false">
                 <join-column name="tool_deployment_id"

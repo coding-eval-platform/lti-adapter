@@ -31,7 +31,7 @@ public class RestExternalCepServicesConfig {
      */
     @Bean
     @LoadBalanced
-    public RestTemplate restTemplate(final RestTemplateBuilder restTemplateBuilder) {
+    public RestTemplate loadBalancedRestTemplate(final RestTemplateBuilder restTemplateBuilder) {
         return restTemplateBuilder.build();
     }
 
@@ -40,7 +40,7 @@ public class RestExternalCepServicesConfig {
     @ConfigurationProperties("evaluations-service")
     public static final class EvaluationsServiceProperties {
         /**
-         * The base url where the Evaluations is serving.
+         * The base url where the Evaluations service is serving.
          */
         private String baseUrl = "http://evaluations-service/";
     }
@@ -49,7 +49,7 @@ public class RestExternalCepServicesConfig {
     @ConfigurationProperties("tokens-service")
     public static final class TokensServiceProperties {
         /**
-         * The base url where the Tokens is serving.
+         * The base url where the Tokens service is serving.
          */
         private String baseUrl = "http://users-service/";
     }

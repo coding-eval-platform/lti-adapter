@@ -26,7 +26,9 @@ CREATE TABLE tool_deployments
     oidc_authentication_endpoint VARCHAR,
     jwks_endpoint                VARCHAR,
     private_key                  VARCHAR,
-    signature_algorithm          VARCHAR
+    signature_algorithm          VARCHAR,
+    application_key              VARCHAR,
+    application_secret           VARCHAR
 );
 
 CREATE TABLE exam_takings
@@ -35,6 +37,7 @@ CREATE TABLE exam_takings
     exam_id            BIGINT           NOT NULL,
     subject            VARCHAR,
     line_item_url      VARCHAR,
+    max_score          INT,
     tool_deployment_id UUID,
     FOREIGN KEY (tool_deployment_id) REFERENCES tool_deployments (id) ON DELETE CASCADE ON UPDATE CASCADE
 );

@@ -32,6 +32,10 @@ public class ExamTaking {
      */
     private final String lineItemUrl;
     /**
+     * The max. amount of score that can be obtained in the exam.
+     */
+    private final int maxScore;
+    /**
      * The {@link ToolDeployment} representing the integration with the LMS.
      */
     private final ToolDeployment toolDeployment;
@@ -62,6 +66,16 @@ public class ExamTaking {
     }
 
     /**
+     * Verifies that the given {@code maxScore} is valid.
+     *
+     * @param maxScore The max. score to be validated.
+     * @throws IllegalArgumentException If the max. score is not valid.
+     */
+    private static void assertMaxScore(final int maxScore) throws IllegalArgumentException {
+        Assert.isTrue(maxScore > 0, "The max. score must be positive");
+    }
+
+    /**
      * Verifies that the given {@code toolDeployment} is valid.
      *
      * @param toolDeployment The {@link ToolDeployment} to be validated.
@@ -82,6 +96,7 @@ public class ExamTaking {
      * @param examId         The id of the exam being taken.
      * @param subject        The subject that is taking the exam (i.e the user id).
      * @param lineItemUrl    The line-item url, used to publish the score in the LMS.
+     * @param maxScore       The max. amount of score that can be obtained in the exam.
      * @param toolDeployment The {@link ToolDeployment} representing the integration with the LMS.
      * @return The created {@link ExamTaking}.
      * @throws IllegalArgumentException If any argument is not valid.
@@ -90,11 +105,13 @@ public class ExamTaking {
             final long examId,
             final String subject,
             final String lineItemUrl,
+            final int maxScore,
             final ToolDeployment toolDeployment) throws IllegalArgumentException {
         assertSubject(subject);
         assertLineItemUrl(lineItemUrl);
         assertToolDeployment(toolDeployment);
+        assertMaxScore(maxScore);
 
-        return new ExamTaking(null, examId, subject, lineItemUrl, toolDeployment);
+        return new ExamTaking(null, examId, subject, lineItemUrl, maxScore, toolDeployment);
     }
 }

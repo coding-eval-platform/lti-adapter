@@ -51,6 +51,14 @@ public class ToolDeployment {
      * The {@link SignatureAlgorithm}.
      */
     private final SignatureAlgorithm signatureAlgorithm;
+    /**
+     * The tool deployment key (used for OAuth2 Client Credentials grant type request).
+     */
+    private final String applicationKey;
+    /**
+     * The tool deployment secret (used for OAuth2 Client Credentials grant type request).
+     */
+    private final String applicationSecret;
 
 
     /**
@@ -63,6 +71,10 @@ public class ToolDeployment {
      * @param jwksEndpoint               Endpoint at which the platform's public keys can be found.
      * @param privateKey                 The private key needed to sign messages sent to the platform (base64 encoded).
      * @param signatureAlgorithm         The {@link SignatureAlgorithm}.
+     * @param applicationKey             The tool deployment key
+     *                                   (used for OAuth2 Client Credentials grant type request).
+     * @param applicationSecret          The tool deployment secret
+     *                                   (used for OAuth2 Client Credentials grant type request).
      * @throws IllegalArgumentException In case any value is not a valid one.
      */
     public ToolDeployment(
@@ -72,7 +84,9 @@ public class ToolDeployment {
             final String oidcAuthenticationEndpoint,
             final String jwksEndpoint,
             final String privateKey,
-            final SignatureAlgorithm signatureAlgorithm) throws IllegalArgumentException {
+            final SignatureAlgorithm signatureAlgorithm,
+            final String applicationKey,
+            final String applicationSecret) throws IllegalArgumentException {
         assertDeploymentId(deploymentId);
         assertClientId(clientId);
         assertIssuer(issuer);
@@ -81,6 +95,8 @@ public class ToolDeployment {
         assertPrivateKey(privateKey);
         assertSignatureAlgorithm(signatureAlgorithm);
         assertPrivateKeyAndAlgorithm(privateKey, signatureAlgorithm);
+        assertApplicationKey(applicationKey);
+        assertApplicationSecret(applicationSecret);
 
         this.id = null;
         this.deploymentId = deploymentId;
@@ -90,6 +106,8 @@ public class ToolDeployment {
         this.jwksEndpoint = jwksEndpoint;
         this.privateKey = privateKey;
         this.signatureAlgorithm = signatureAlgorithm;
+        this.applicationKey = applicationKey;
+        this.applicationSecret = applicationSecret;
     }
 
 
@@ -168,6 +186,26 @@ public class ToolDeployment {
     private static void assertSignatureAlgorithm(final SignatureAlgorithm signatureAlgorithm)
             throws IllegalArgumentException {
         Assert.notNull(signatureAlgorithm, "The signatureAlgorithm must not be null");
+    }
+
+    /**
+     * Asserts that the given {@code applicationKey} is valid.
+     *
+     * @param applicationKey The application key to be checked.
+     * @throws IllegalArgumentException In case the application key is not valid.
+     */
+    private static void assertApplicationKey(final String applicationKey) throws IllegalArgumentException {
+        Assert.notNull(applicationKey, "The application key must not be null");
+    }
+
+    /**
+     * Asserts that the given {@code applicationSecret} is valid.
+     *
+     * @param applicationSecret The application secret to be checked.
+     * @throws IllegalArgumentException In case the application secret is not valid.
+     */
+    private static void assertApplicationSecret(final String applicationSecret) throws IllegalArgumentException {
+        Assert.notNull(applicationSecret, "The application secret must not be null");
     }
 
     /**

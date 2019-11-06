@@ -27,7 +27,7 @@ public class RestTemplateTokensService implements TokensService {
      */
     private final RestTemplate restTemplate;
     /**
-     * The {@link URI} that has be be accessed in order to create the internal tokens.
+     * The {@link URI} that has to be accessed in order to create the internal tokens.
      */
     private final URI internalTokensUri;
 
@@ -35,16 +35,16 @@ public class RestTemplateTokensService implements TokensService {
     /**
      * Constructor.
      *
-     * @param restTemplate The {@link RestTemplate} used to communicate with the evaluations service.
-     * @param properties   An {@link RestExternalCepServicesConfig.EvaluationsServiceProperties} instance used to get
-     *                     the evaluations service's base url.
+     * @param loadBalancedRestTemplate The {@link RestTemplate} used to communicate with the evaluations service.
+     * @param properties               An {@link RestExternalCepServicesConfig.EvaluationsServiceProperties} instance used to get
+     *                                 the evaluations service's base url.
      */
     public RestTemplateTokensService(
-            final RestTemplate restTemplate,
+            final RestTemplate loadBalancedRestTemplate,
             final RestExternalCepServicesConfig.TokensServiceProperties properties) {
         Assert.notNull(properties, "The properties instance must not be null");
         Assert.hasText(properties.getBaseUrl(), "The evaluations service's base url must not be blank");
-        this.restTemplate = restTemplate;
+        this.restTemplate = loadBalancedRestTemplate;
         this.internalTokensUri = UriComponentsBuilder.fromUriString(properties.getBaseUrl())
                 .path(Constants.INTERNAL_PATH)
                 .path(TOKENS_PATH)

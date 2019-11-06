@@ -16,7 +16,12 @@ import java.util.UUID;
  * Represents a tool deployment in an LTI platform.
  */
 @Value
-@ToString(exclude = "privateKey")
+@ToString(exclude = {
+        "privateKey",
+        "signatureAlgorithm",
+        "applicationKey",
+        "applicationSecret",
+})
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
 @ValidPrivateKeyAndSignatureAlgorithm(
@@ -49,6 +54,12 @@ public class ToolDeploymentDto {
     @ValidSignatureAlgorithm(message = "The signature algorithm is not supported", payload = IllegalValue.class)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private final SignatureAlgorithm signatureAlgorithm;
+    @NotNull(message = "The application key is missing.", payload = MissingValue.class)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private final String applicationKey;
+    @NotNull(message = "The application secret is missing.", payload = MissingValue.class)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private final String applicationSecret;
 
 
     /**
@@ -66,7 +77,9 @@ public class ToolDeploymentDto {
                 toolDeployment.getOidcAuthenticationEndpoint(),
                 toolDeployment.getJwksEndpoint(),
                 toolDeployment.getPrivateKey(),
-                toolDeployment.getSignatureAlgorithm()
+                toolDeployment.getSignatureAlgorithm(),
+                toolDeployment.getApplicationKey(),
+                toolDeployment.getApplicationSecret()
         );
     }
 }

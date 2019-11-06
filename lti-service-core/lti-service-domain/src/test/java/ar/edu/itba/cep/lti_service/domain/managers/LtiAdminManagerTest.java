@@ -176,6 +176,8 @@ public class LtiAdminManagerTest {
         final var oidcAuthenticationEndpoint = oidcAuthenticationEndpoint();
         final var jwksEndpoint = jwksEndpoint();
         final var algorithm = signatureAlgorithm();
+        final var applicationKey = applicationKey();
+        final var applicationSecret = applicationSecret();
         when(toolDeploymentRepository.exists(deploymentId, clientId, issuer)).thenReturn(false);
         when(toolDeploymentRepository.save(any(ToolDeployment.class))).then(i -> i.getArgument(0));
 
@@ -186,7 +188,9 @@ public class LtiAdminManagerTest {
                 oidcAuthenticationEndpoint,
                 jwksEndpoint,
                 privateKey(algorithm),
-                signatureAlgorithm()
+                signatureAlgorithm(),
+                applicationKey,
+                applicationSecret
         );
 
         Assertions.assertAll(
@@ -203,6 +207,16 @@ public class LtiAdminManagerTest {
                         jwksEndpoint,
                         toolDeployment.getJwksEndpoint(),
                         "The JWKS endpoint does not match"
+                ),
+                () -> Assertions.assertEquals(
+                        applicationKey,
+                        toolDeployment.getApplicationKey(),
+                        "The Application key does not match"
+                ),
+                () -> Assertions.assertEquals(
+                        applicationSecret,
+                        toolDeployment.getApplicationSecret(),
+                        "The Application secret does not match"
                 )
         );
 
@@ -240,7 +254,9 @@ public class LtiAdminManagerTest {
                         oidcAuthenticationEndpoint(),
                         jwksEndpoint(),
                         privateKey(algorithm),
-                        signatureAlgorithm()
+                        signatureAlgorithm(),
+                        applicationKey(),
+                        applicationSecret()
                 ),
                 "Registration of a Tool Deployment with a given deployment id, client id and issuer" +
                         " that already exists is being allowed"
@@ -346,5 +362,19 @@ public class LtiAdminManagerTest {
      */
     private static SignatureAlgorithm signatureAlgorithm() {
         return SignatureAlgorithm.RS512;
+    }
+
+    /**
+     * @return A valid application key.
+     */
+    private static String applicationKey() {
+        return UUID.randomUUID().toString();
+    }
+
+    /**
+     * @return A valid application secret.
+     */
+    private static String applicationSecret() {
+        return UUID.randomUUID().toString();
     }
 }

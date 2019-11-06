@@ -1,17 +1,14 @@
 package ar.edu.itba.cep.lti_service.rest.controller.endpoints;
 
-import ar.edu.itba.cep.lti.LtiService;
 import ar.edu.itba.cep.lti.constants.Paths;
 import ar.edu.itba.cep.lti.dtos.*;
+import ar.edu.itba.cep.lti_service.services.LtiService;
 import com.bellotapps.webapps_commons.config.JerseyController;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -73,4 +70,13 @@ public class LtiAppController {
         final var examTakingResponse = ltiService.takeExam(dto.toModel());
         return Response.ok(ExamTakingResponseDto.fromModel(examTakingResponse)).build();
     }
+
+    @PUT
+    @Path(Paths.EXAM_SCORING_PATH)
+    public Response scoreExam(final ExamScoringRequestDto dto) {
+        ltiService.scoreExam(dto.toModel());
+        return Response.noContent().build();
+    }
+
+
 }

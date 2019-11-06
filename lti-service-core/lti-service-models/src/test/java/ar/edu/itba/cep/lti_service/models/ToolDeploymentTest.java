@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -33,6 +32,8 @@ class ToolDeploymentTest {
         final var jwksEndpoint = jwksEndpoint();
         final var algorithm = signatureAlgorithm();
         final var privateKey = privateKey(algorithm);
+        final var applicationKey = applicationKey();
+        final var applicationSecret = applicationSecret();
 
         final var toolDeployment = new ToolDeployment(
                 deploymentId,
@@ -41,7 +42,9 @@ class ToolDeploymentTest {
                 oidcAuthenticationEndpoint,
                 jwksEndpoint,
                 privateKey,
-                algorithm
+                algorithm,
+                applicationKey,
+                applicationSecret
         );
 
         Assertions.assertAll(
@@ -64,6 +67,16 @@ class ToolDeploymentTest {
                         algorithm,
                         toolDeployment.getSignatureAlgorithm(),
                         "Signature algorithm does not match"
+                ),
+                () -> Assertions.assertEquals(
+                        applicationKey,
+                        toolDeployment.getApplicationKey(),
+                        "Application key does not match"
+                ),
+                () -> Assertions.assertEquals(
+                        applicationSecret,
+                        toolDeployment.getApplicationSecret(),
+                        "Application secret does not match"
                 )
         );
     }
@@ -89,7 +102,9 @@ class ToolDeploymentTest {
                         oidcAuthenticationEndpoint(),
                         jwksEndpoint(),
                         privateKey(algorithm),
-                        algorithm
+                        algorithm,
+                        applicationKey(),
+                        applicationSecret()
                 ),
                 "Creating a ToolDeployment with a null deployment id is being allowed"
         );
@@ -111,7 +126,9 @@ class ToolDeploymentTest {
                         oidcAuthenticationEndpoint(),
                         jwksEndpoint(),
                         privateKey(algorithm),
-                        algorithm
+                        algorithm,
+                        applicationKey(),
+                        applicationSecret()
                 ),
                 "Creating a ToolDeployment with a null client id is being allowed"
         );
@@ -133,7 +150,9 @@ class ToolDeploymentTest {
                         oidcAuthenticationEndpoint(),
                         jwksEndpoint(),
                         privateKey(algorithm),
-                        algorithm
+                        algorithm,
+                        applicationKey(),
+                        applicationSecret()
                 ),
                 "Creating a ToolDeployment with a null issuer is being allowed"
         );
@@ -155,7 +174,9 @@ class ToolDeploymentTest {
                         null,
                         jwksEndpoint(),
                         privateKey(algorithm),
-                        algorithm
+                        algorithm,
+                        applicationKey(),
+                        applicationSecret()
                 ),
                 "Creating a ToolDeployment with a null Open-Id Connection authentication endpoint id is being allowed"
         );
@@ -177,14 +198,16 @@ class ToolDeploymentTest {
                         oidcAuthenticationEndpoint(),
                         null,
                         privateKey(algorithm),
-                        algorithm
+                        algorithm,
+                        applicationKey(),
+                        applicationSecret()
                 ),
                 "Creating a ToolDeployment with a null JWKS endpoint is being allowed"
         );
     }
 
     /**
-     * Tests that a null {@link PrivateKey} is not allowed when creating a {@link ToolDeployment}
+     * Tests that a null private key is not allowed when creating a {@link ToolDeployment}
      * (i.e throws an {@link IllegalArgumentException}).
      */
     @Test
@@ -198,7 +221,9 @@ class ToolDeploymentTest {
                         oidcAuthenticationEndpoint(),
                         jwksEndpoint(),
                         null,
-                        signatureAlgorithm()
+                        signatureAlgorithm(),
+                        applicationKey(),
+                        applicationSecret()
                 ),
                 "Creating a ToolDeployment with a null Private key is being allowed"
         );
@@ -219,9 +244,57 @@ class ToolDeploymentTest {
                         oidcAuthenticationEndpoint(),
                         jwksEndpoint(),
                         privateKey(SignatureAlgorithm.RS512),
-                        null
+                        null,
+                        applicationKey(),
+                        applicationSecret()
                 ),
                 "Creating a ToolDeployment with a null Signature algorithm is being allowed"
+        );
+    }
+
+    /**
+     * Tests that a null application key is not allowed when creating a {@link ToolDeployment}
+     * (i.e throws an {@link IllegalArgumentException}).
+     */
+    @Test
+    void testNullApplicationKey() {
+        Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> new ToolDeployment(
+                        deploymentId(),
+                        clientId(),
+                        issuer(),
+                        oidcAuthenticationEndpoint(),
+                        jwksEndpoint(),
+                        privateKey(SignatureAlgorithm.RS512),
+                        signatureAlgorithm(),
+                        null,
+                        applicationSecret()
+                ),
+                "Creating a ToolDeployment with a null application key is being allowed"
+        );
+    }
+
+    /**
+     * Tests that a null application secret is not allowed when creating a {@link ToolDeployment}
+     * (i.e throws an {@link IllegalArgumentException}).
+     */
+    @Test
+    void testNullApplicationSecret() {
+        Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> new ToolDeployment(
+                        deploymentId(),
+                        clientId(),
+                        issuer(),
+                        oidcAuthenticationEndpoint(),
+                        jwksEndpoint(),
+                        privateKey(SignatureAlgorithm.RS512),
+                        signatureAlgorithm(),
+                        applicationKey(),
+                        null
+                ),
+                "Creating a ToolDeployment with a null application secret is being allowed"
         );
     }
 
@@ -281,5 +354,19 @@ class ToolDeploymentTest {
      */
     private static SignatureAlgorithm signatureAlgorithm() {
         return SignatureAlgorithm.RS512;
+    }
+
+    /**
+     * @return A valid application key.
+     */
+    private static String applicationKey() {
+        return UUID.randomUUID().toString();
+    }
+
+    /**
+     * @return A valid application secret.
+     */
+    private static String applicationSecret() {
+        return UUID.randomUUID().toString();
     }
 }

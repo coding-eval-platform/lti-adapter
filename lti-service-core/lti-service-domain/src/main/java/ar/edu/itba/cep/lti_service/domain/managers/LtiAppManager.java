@@ -12,6 +12,7 @@ import ar.edu.itba.cep.lti_service.models.ExamTaking;
 import ar.edu.itba.cep.lti_service.models.ToolDeployment;
 import ar.edu.itba.cep.lti_service.repositories.ExamTakingRepository;
 import ar.edu.itba.cep.lti_service.repositories.ToolDeploymentRepository;
+import ar.edu.itba.cep.lti_service.services.LtiBadRequestException;
 import ar.edu.itba.cep.lti_service.services.LtiService;
 import ar.edu.itba.cep.roles.Role;
 import com.bellotapps.webapps_commons.exceptions.NoSuchEntityException;

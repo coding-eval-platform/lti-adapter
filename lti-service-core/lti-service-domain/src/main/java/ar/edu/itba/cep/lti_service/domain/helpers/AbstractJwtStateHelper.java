@@ -1,6 +1,6 @@
 package ar.edu.itba.cep.lti_service.domain.helpers;
 
-import ar.edu.itba.cep.lti.LtiAuthenticationException;
+import ar.edu.itba.cep.lti_service.services.LtiAuthenticationException;
 import io.jsonwebtoken.*;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;

@@ -1,6 +1,6 @@
 package ar.edu.itba.cep.lti_service.domain.helpers;
 
-import ar.edu.itba.cep.lti.LtiBadRequestException;
+import ar.edu.itba.cep.lti_service.services.LtiBadRequestException;
 import lombok.*;
 import org.springframework.stereotype.Component;
 

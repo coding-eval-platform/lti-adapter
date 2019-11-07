@@ -1,8 +1,8 @@
 package ar.edu.itba.cep.lti_service.domain.helpers;
 
-import ar.edu.itba.cep.lti.LtiAuthenticationException;
-import ar.edu.itba.cep.lti.LtiBadRequestException;
 import ar.edu.itba.cep.lti_service.models.ToolDeployment;
+import ar.edu.itba.cep.lti_service.services.LtiAuthenticationException;
+import ar.edu.itba.cep.lti_service.services.LtiBadRequestException;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyConverter;
 import io.jsonwebtoken.Claims;

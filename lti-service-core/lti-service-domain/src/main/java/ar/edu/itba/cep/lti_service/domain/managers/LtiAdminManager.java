@@ -7,6 +7,7 @@ import com.bellotapps.webapps_commons.errors.UniqueViolationError;
 import com.bellotapps.webapps_commons.exceptions.UniqueViolationException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.AllArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,33 +37,39 @@ public class LtiAdminManager implements LtiAdminService {
     // ================================================================================================================
 
     @Override
+    @PreAuthorize("hasAuthority('ADMIN')")
     public List<ToolDeployment> getAllToolDeployments() {
         final var deployments = toolDeploymentRepository.findAll();
         return StreamSupport.stream(deployments.spliterator(), false).collect(Collectors.toList());
     }
 
     @Override
+    @PreAuthorize("hasAuthority('ADMIN')")
     public List<ToolDeployment> find(final String issuer) {
         return toolDeploymentRepository.find(issuer);
     }
 
     @Override
+    @PreAuthorize("hasAuthority('ADMIN')")
     public List<ToolDeployment> find(final String clientId, final String issuer) {
         return toolDeploymentRepository.find(clientId, issuer);
     }
 
     @Override
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Optional<ToolDeployment> getToolDeploymentById(final UUID id) {
         return toolDeploymentRepository.findById(id);
     }
 
     @Override
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Optional<ToolDeployment> find(final String deploymentId, final String clientId, final String issuer) {
         return toolDeploymentRepository.find(deploymentId, clientId, issuer);
     }
 
     @Override
     @Transactional
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ToolDeployment registerToolDeployment(
             final String deploymentId,
             final String clientId,
@@ -95,6 +102,7 @@ public class LtiAdminManager implements LtiAdminService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAuthority('ADMIN')")
     public void unregisterToolDeployment(final UUID id) {
         if (toolDeploymentRepository.existsById(id)) {
             toolDeploymentRepository.deleteById(id);

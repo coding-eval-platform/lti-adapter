@@ -40,6 +40,14 @@
             <groupId>ar.edu.itba.cep</groupId>
             <artifactId>commons-keys</artifactId>
         </dependency>
+        <dependency>
+            <groupId>ar.edu.itba.cep</groupId>
+            <artifactId>commons-web-authentication</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ar.edu.itba.cep</groupId>
+            <artifactId>commons-web-authentication-jwt</artifactId>
+        </dependency>
 
         <!-- Spring Boot Jersey Starter -->
         <dependency>

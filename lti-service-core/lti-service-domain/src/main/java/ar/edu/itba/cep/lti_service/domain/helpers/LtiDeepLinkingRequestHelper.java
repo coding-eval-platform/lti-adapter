@@ -1,5 +1,6 @@
 package ar.edu.itba.cep.lti_service.domain.helpers;
 
+import ar.edu.itba.cep.lti.LtiBadRequestException;
 import lombok.*;
 import org.springframework.stereotype.Component;
 
@@ -51,7 +52,11 @@ public class LtiDeepLinkingRequestHelper {
             throws RuntimeException {
         Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.MESSAGE_TYPE))
                 .filter(DEEP_LINKING_MESSAGE_TYPE::equals)
-                .orElseThrow(RuntimeException::new) // TODO: define new exception
+                .orElseThrow(
+                        () -> new LtiBadRequestException(
+                                "The LTI message type must be \"" + DEEP_LINKING_MESSAGE_TYPE + "\""
+                        )
+                )
         ;
     }
 
@@ -64,11 +69,18 @@ public class LtiDeepLinkingRequestHelper {
      */
     private static DeepLinkingSettings doExtractSettings(final Map<String, Object> ltiMessage) throws RuntimeException {
         return Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.DL_SETTINGS))
-                .filter(settings -> settings instanceof Map)
+                .filter(Map.class::isInstance)
                 .map(Map.class::cast)
                 .map(LtiDeepLinkingRequestHelper::buildFromSettings)
                 .filter(DeepLinkingSettings::requiredArePresent)
-                .orElseThrow(RuntimeException::new) // TODO: define new exception
+                .orElseThrow(
+                        () -> new LtiBadRequestException(
+                                "The settings claim must be a Map containing at least the following keys: " +
+                                        "\"" + RETURN_URL_PROPERTY + "\", " +
+                                        "\"" + ACCEPT_TYPES_PROPERTY + "\", " +
+                                        "\"" + ACCEPTABLE_PRESENTATION_DOCUMENT_TARGETS_PROPERTY + "\""
+                        )
+                )
                 ;
     }
 

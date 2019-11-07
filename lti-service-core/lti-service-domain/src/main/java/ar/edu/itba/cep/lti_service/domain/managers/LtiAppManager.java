@@ -44,7 +44,7 @@ public class LtiAppManager implements LtiService {
     private final LtiMessageDeserializer ltiMessageDeserializer;
     private final LtiMessageValidator ltiMessageValidator;
     private final LtiDeepLinkingRequestHelper ltiDeepLinkingRequestHelper;
-    private final ExamCreationStateHelper examCreationStateHelper;
+    private final ExamSelectionStateHelper examSelectionStateHelper;
     private final LtiMessageSerializer ltiMessageSerializer;
     private final LtiDeepLinkingResponseHelper ltiDeepLinkingResponseHelper;
 
@@ -116,7 +116,7 @@ public class LtiAppManager implements LtiService {
         examTakingRepository.get(request.getExamId(), request.getSubject()).ifPresentOrElse(
                 examTaking -> ltiAssignmentAndGradeServicesClient.publishScore(examTaking, request.getScore()),
                 () -> {
-                    throw new RuntimeException("No Exam Taking with the given arguments"); // TODO: define new exception?
+                    throw new IllegalStateException("No Exam Taking with the given arguments");
                 }
         );
     }
@@ -138,8 +138,7 @@ public class LtiAppManager implements LtiService {
         final var stateData = ltiStateHelper.decode(response.getState());
         final var toolDeployment = toolDeploymentRepository
                 .findById(stateData.getToolDeploymentId())
-                .orElseThrow(IllegalStateException::new) // TODO: define new exception?
-                ;
+                .orElseThrow(IllegalStateException::new);
         final var ltiMessage = ltiMessageDeserializer.deserialize(response.getIdToken(), toolDeployment);
         ltiMessageValidator.validateLtiMessage(toolDeployment, stateData.getNonce(), ltiMessage);
         return andThen.handle(toolDeployment, ltiMessage);
@@ -161,17 +160,17 @@ public class LtiAppManager implements LtiService {
         // and validate that exams can be created.
         final var settings = ltiDeepLinkingRequestHelper.extractDeepLinkingSettings(ltiMessage);
         final var capabilities = ltiAssignmentAndGradeServicesHelper.extractCapabilities(ltiMessage);
-        validateExamCanBeCreated(settings, capabilities);
+        validateExamCanBeSelected(settings, capabilities);
 
 
         // Then create the state that needs to be sent to the UA.
-        final var examCreationStateData = ExamCreationStateHelper.ExamCreationStateData.create(
+        final var examSelectionStateData = ExamSelectionStateHelper.ExamSelectionStateData.create(
                 settings.getReturnUrl(),
                 settings.getData(),
                 toolDeployment.getId(),
                 UUID.randomUUID().toString()
         );
-        final var state = examCreationStateHelper.encode(examCreationStateData);
+        final var state = examSelectionStateHelper.encode(examSelectionStateData);
 
         return new ExamSelectionResponse(state);
     }
@@ -188,11 +187,10 @@ public class LtiAppManager implements LtiService {
         if (exam.getState() != Exam.State.UPCOMING) {
             return NotUpcomingExamSelectedResponse.getInstance();
         }
-        final var state = examCreationStateHelper.decode(request.getState());
+        final var state = examSelectionStateHelper.decode(request.getState());
         final var toolDeployment = toolDeploymentRepository
                 .findById(state.getToolDeploymentId())
-                .orElseThrow(IllegalStateException::new) // TODO: define new exception?
-                ;
+                .orElseThrow(IllegalStateException::new);
         final var ltiResourceLinkBuilder = adaptExamToLti(exam).url(request.getUrl());
         Optional.ofNullable(request.getIcon()).map(LtiAppManager::mapImage).ifPresent(ltiResourceLinkBuilder::icon);
         Optional.ofNullable(request.getThumbnail()).map(LtiAppManager::mapImage).ifPresent(ltiResourceLinkBuilder::thumbnail);
@@ -214,7 +212,7 @@ public class LtiAppManager implements LtiService {
     private ExamTakingResponse takeExam(final ToolDeployment toolDeployment, final Map<String, Object> ltiMessage) {
         // First check if the message is an LtiResourceLinkRequest
         if (!RESOURCE_LINK_REQUEST.equals(ltiMessage.get(LtiConstants.LtiClaims.MESSAGE_TYPE))) {
-            throw new RuntimeException("Message type should be an LtiResourceLinkRequest"); // TODO: define new exception?
+            throw new LtiBadRequestException("Message type should be an LtiResourceLinkRequest");
         }
 
         // If yes, extract capabilities in order to check if the score can be pushed into Campus
@@ -239,16 +237,16 @@ public class LtiAppManager implements LtiService {
                 })
                 .orElseThrow(() -> new RuntimeException("Missing exam id"));
         final var exam = evaluationsService.getExamById(examId)
-                .orElseThrow(() -> new RuntimeException("Could not retrieve the exam. Maybe was deleted?")); // TODO: define new exception?
+                .orElseThrow(() -> new IllegalStateException("Could not retrieve the exam. Maybe was deleted?"));
 
 
         final var userId = Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.SUBJECT))
                 .filter(String.class::isInstance)
                 .map(String.class::cast)
-                .orElseThrow(() -> new RuntimeException("Missing user id")); // TODO: define new exception?
+                .orElseThrow(() -> new LtiBadRequestException("Missing user id"));
         final var lineItemUrl = capabilities.getLineItem();
         if (lineItemUrl == null) {
-            throw new RuntimeException("Missing lineitem capability"); // TODO: define new exception?
+            throw new LtiBadRequestException("Missing lineitem capability");
         }
         if (!examTakingRepository.exists(examId, userId)) {
             final var examTaking = ExamTaking.withoutId(examId, userId, lineItemUrl, exam.getMaxScore(), toolDeployment);
@@ -257,7 +255,7 @@ public class LtiAppManager implements LtiService {
 
         // Then get other needed stuff for the response.
         final var tokenData = tokensService.tokenFor(userId, Set.of(Role.STUDENT))
-                .orElseThrow(() -> new RuntimeException("Could not get token")); // TODO: define new exception?
+                .orElseThrow(() -> new IllegalStateException("Could not get token"));
         final var returnUrl = launchPresentation(ltiMessage)
                 .flatMap(m -> Optional.ofNullable(m.get(RETURN_URL_LAUNCH_PRESENTATION)))
                 .filter(String.class::isInstance)
@@ -284,7 +282,7 @@ public class LtiAppManager implements LtiService {
      *                     to be analyzed.
      * @throws RuntimeException If an exam cannot be created.
      */
-    private static void validateExamCanBeCreated(
+    private static void validateExamCanBeSelected(
             final LtiDeepLinkingRequestHelper.DeepLinkingSettings settings,
             final LtiAssignmentAndGradeServicesHelper.AssignmentAndGradeServicesCapabilities capabilities)
             throws RuntimeException {
@@ -300,7 +298,7 @@ public class LtiAppManager implements LtiService {
     private static void validateResourceLinkCanBeCreated(
             final LtiDeepLinkingRequestHelper.DeepLinkingSettings settings) throws RuntimeException {
         if (!settings.getAcceptTypes().contains(LTI_RESOURCE_LINK)) {
-            throw new RuntimeException("Missing lti resource link in accept types"); // TODO: define new exception?
+            throw new LtiBadRequestException("Missing lti resource link in accept types");
         }
     }
 
@@ -315,7 +313,7 @@ public class LtiAppManager implements LtiService {
             final LtiAssignmentAndGradeServicesHelper.AssignmentAndGradeServicesCapabilities capabilities)
             throws RuntimeException {
         if (!capabilities.getScopes().contains(LtiAssignmentAndGradeServicesHelper.SCORE_SCOPE)) {
-            throw new RuntimeException("Missing score scope"); // TODO: define new exception?
+            throw new LtiBadRequestException("Missing score scope");
         }
     }
 

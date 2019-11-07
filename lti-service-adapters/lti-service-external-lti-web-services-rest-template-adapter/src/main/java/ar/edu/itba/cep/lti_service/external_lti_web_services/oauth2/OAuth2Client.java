@@ -21,7 +21,7 @@ public interface OAuth2Client {
      * @throws ExternalServiceException If there is any issue when communicating with the authorization server.
      */
     String getAccessToken(final ToolDeployment toolDeployment, final List<String> scopes)
-            throws ExternalServiceException; // TODO: define exceptions
+            throws ExternalServiceException;
 
     /**
      * Retrieves an access token according to the given {@code toolDeployment}, with the given {@code scopes}.
@@ -33,7 +33,7 @@ public interface OAuth2Client {
      * @throws ExternalServiceException If there is any issue when communicating with the authorization server.
      */
     default String getAccessToken(final ToolDeployment toolDeployment, final String... scopes)
-            throws ExternalServiceException /*  TODO: define exceptions */ {
+            throws ExternalServiceException {
         return getAccessToken(toolDeployment, Arrays.asList(scopes));
     }
 }

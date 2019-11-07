@@ -1,7 +1,7 @@
 package ar.edu.itba.cep.lti_service.domain.config;
 
 import ar.edu.itba.cep.lti_service.domain.helpers.AbstractJwtStateHelper;
-import ar.edu.itba.cep.lti_service.domain.helpers.ExamCreationStateHelper;
+import ar.edu.itba.cep.lti_service.domain.helpers.ExamSelectionStateHelper;
 import ar.edu.itba.cep.lti_service.domain.helpers.LtiStateHelper;
 import ar.edu.itba.cep.security.KeyHelper;
 import lombok.AllArgsConstructor;
@@ -34,8 +34,8 @@ public class JwtStateHelperConfig {
     /**
      * Builds an {@link LtiStateHelper} bean.
      *
-     * @param publicKey  The {@link PublicKey} needed by the {@link ExamCreationStateHelper}.
-     * @param privateKey The {@link PrivateKey} needed by the {@link ExamCreationStateHelper}.
+     * @param publicKey  The {@link PublicKey} needed by the {@link ExamSelectionStateHelper}.
+     * @param privateKey The {@link PrivateKey} needed by the {@link ExamSelectionStateHelper}.
      * @return The created bean.
      */
     @Bean
@@ -46,17 +46,17 @@ public class JwtStateHelperConfig {
     }
 
     /**
-     * Builds an {@link ExamCreationStateHelper} bean.
+     * Builds an {@link ExamSelectionStateHelper} bean.
      *
-     * @param publicKey  The {@link PublicKey} needed by the {@link ExamCreationStateHelper}.
-     * @param privateKey The {@link PrivateKey} needed by the {@link ExamCreationStateHelper}.
+     * @param publicKey  The {@link PublicKey} needed by the {@link ExamSelectionStateHelper}.
+     * @param privateKey The {@link PrivateKey} needed by the {@link ExamSelectionStateHelper}.
      * @return The created bean.
      */
     @Bean
-    public ExamCreationStateHelper examCreationStateHelper(
+    public ExamSelectionStateHelper examCreationStateHelper(
             @Qualifier(value = "state-helper-public-key") final PublicKey publicKey,
             @Qualifier(value = "state-helper-private-key") final PrivateKey privateKey) {
-        return new ExamCreationStateHelper(publicKey, privateKey);
+        return new ExamSelectionStateHelper(publicKey, privateKey);
     }
 
 

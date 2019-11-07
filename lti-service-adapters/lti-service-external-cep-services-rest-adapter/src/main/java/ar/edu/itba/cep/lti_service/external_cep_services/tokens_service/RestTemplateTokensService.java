@@ -6,7 +6,6 @@ import ar.edu.itba.cep.roles.Role;
 import com.bellotapps.webapps_commons.exceptions.ExternalServiceException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -60,7 +59,7 @@ public class RestTemplateTokensService implements TokensService {
             return Optional.ofNullable(restTemplate.postForObject(internalTokensUri, requestDto, TokenDataDto.class))
                     .map(TokenDataDto::toTokenData)
                     ;
-        } catch (final RestClientException e) {
+        } catch (final Throwable e) {
             throw new ExternalServiceException(
                     "tokens-service",
                     "Unexpected error when communicating with the tokens service (part of the users service)",

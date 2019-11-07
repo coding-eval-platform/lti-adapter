@@ -9,14 +9,14 @@ import java.security.PublicKey;
 import java.util.Optional;
 import java.util.UUID;
 
-import static ar.edu.itba.cep.lti_service.domain.helpers.ExamCreationStateHelper.ExamCreationStateData;
-import static ar.edu.itba.cep.lti_service.domain.helpers.ExamCreationStateHelper.ExamCreationStateDataJws;
+import static ar.edu.itba.cep.lti_service.domain.helpers.ExamSelectionStateHelper.ExamCreationStateDataJws;
+import static ar.edu.itba.cep.lti_service.domain.helpers.ExamSelectionStateHelper.ExamSelectionStateData;
 
 /**
  * Component in charge of helping with LTI Message state tasks
  * (i.e encoding and decoding, applying the needed validations).
  */
-public class ExamCreationStateHelper extends AbstractJwtStateHelper<ExamCreationStateData, ExamCreationStateDataJws> {
+public class ExamSelectionStateHelper extends AbstractJwtStateHelper<ExamSelectionStateData, ExamCreationStateDataJws> {
 
 
     private static final String RETURN_URL_CLAIM = "return_url";
@@ -31,23 +31,23 @@ public class ExamCreationStateHelper extends AbstractJwtStateHelper<ExamCreation
      * @param publicKey  The {@link PublicKey} passed to the super constructor.
      * @param privateKey The {@link PrivateKey} passed to the super constructor.
      */
-    public ExamCreationStateHelper(final PublicKey publicKey, final PrivateKey privateKey) {
-        super(publicKey, privateKey, ExamCreationStateHelper::claimsSetter, StateDataJwtHandlerAdapter::getInstance);
+    public ExamSelectionStateHelper(final PublicKey publicKey, final PrivateKey privateKey) {
+        super(publicKey, privateKey, ExamSelectionStateHelper::claimsSetter, StateDataJwtHandlerAdapter::getInstance);
     }
 
 
     /**
      * Convenient static method to be passed to the super constructor using method reference as a
-     * {@link java.util.function.BiFunction} of {@link JwtBuilder} and {@link ExamCreationStateData},
+     * {@link java.util.function.BiFunction} of {@link JwtBuilder} and {@link ExamSelectionStateData},
      * returning a {@link JwtBuilder},
-     * in which the {@link JwtBuilder} is configured using information in the {@link ExamCreationStateData},
+     * in which the {@link JwtBuilder} is configured using information in the {@link ExamSelectionStateData},
      * and then returned again.
      *
      * @param builder The {@link JwtBuilder} to be configured.
-     * @param state   The {@link ExamCreationStateData} from where information will be extracted.
+     * @param state   The {@link ExamSelectionStateData} from where information will be extracted.
      * @return The given {@code builder}, but configured with information in the given {@code state}.
      */
-    private static JwtBuilder claimsSetter(final JwtBuilder builder, final ExamCreationStateData state) {
+    private static JwtBuilder claimsSetter(final JwtBuilder builder, final ExamSelectionStateData state) {
         builder
                 .claim(RETURN_URL_CLAIM, state.getReturnUrl())
                 .claim(TOOL_DEPLOYMENT_ID_CLAIM, state.getToolDeploymentId())
@@ -59,10 +59,10 @@ public class ExamCreationStateHelper extends AbstractJwtStateHelper<ExamCreation
 
 
     /**
-     * Bean class representing an exam creation state.
+     * Bean class representing an exam selection state.
      */
     @Data(staticConstructor = "create")
-    public static final class ExamCreationStateData {
+    public static final class ExamSelectionStateData {
         /**
          * The URL to which the UA must be redirected when the Deep Linking Flow finishes.
          */
@@ -84,9 +84,9 @@ public class ExamCreationStateHelper extends AbstractJwtStateHelper<ExamCreation
 
 
     /**
-     * An extension of an {@link AbstractJws} using {@link ExamCreationStateData} as the body.
+     * An extension of an {@link AbstractJws} using {@link ExamSelectionStateData} as the body.
      */
-    static final class ExamCreationStateDataJws extends AbstractJws<ExamCreationStateData> {
+    static final class ExamCreationStateDataJws extends AbstractJws<ExamSelectionStateData> {
 
         /**
          * Constructor.
@@ -95,7 +95,7 @@ public class ExamCreationStateHelper extends AbstractJwtStateHelper<ExamCreation
          * @param body      The body (i.e an object of type {@code S}).
          * @param signature The {@link Jws} signature.
          */
-        ExamCreationStateDataJws(final JwsHeader header, final ExamCreationStateData body, final String signature) {
+        ExamCreationStateDataJws(final JwsHeader header, final ExamSelectionStateData body, final String signature) {
             super(header, body, signature);
         }
     }
@@ -104,7 +104,7 @@ public class ExamCreationStateHelper extends AbstractJwtStateHelper<ExamCreation
     /**
      * An extension of a {@link JwtHandlerAdapter} that builds JWT whose bodies are {@link ExamCreationStateDataJws}s.
      */
-    private static final class StateDataJwtHandlerAdapter extends AbstractJwtHandlerAdapter<ExamCreationStateData, ExamCreationStateDataJws> {
+    private static final class StateDataJwtHandlerAdapter extends AbstractJwtHandlerAdapter<ExamSelectionStateData, ExamCreationStateDataJws> {
 
         /**
          * The singleton instance.
@@ -121,13 +121,13 @@ public class ExamCreationStateHelper extends AbstractJwtStateHelper<ExamCreation
 
 
         /**
-         * Creates a {@link ExamCreationStateData} from the given {@code jws}.
+         * Creates a {@link ExamSelectionStateData} from the given {@code jws}.
          *
-         * @param jws The {@link Jws} from where the {@link ExamCreationStateData} will be built.
-         * @return The created {@link ExamCreationStateData}.
+         * @param jws The {@link Jws} from where the {@link ExamSelectionStateData} will be built.
+         * @return The created {@link ExamSelectionStateData}.
          */
-        private static ExamCreationStateData fromJws(final Jws<Claims> jws) {
-            return ExamCreationStateData.create(
+        private static ExamSelectionStateData fromJws(final Jws<Claims> jws) {
+            return ExamSelectionStateData.create(
                     jws.getBody().get(RETURN_URL_CLAIM, String.class),
                     jws.getBody().get(DATA_CLAIM, String.class),
                     extractUUID(jws, TOOL_DEPLOYMENT_ID_CLAIM),

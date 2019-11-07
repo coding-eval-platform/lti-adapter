@@ -1,5 +1,6 @@
 package ar.edu.itba.cep.lti_service.domain.helpers;
 
+import ar.edu.itba.cep.lti.LtiBadRequestException;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -34,10 +35,10 @@ public class LtiAssignmentAndGradeServicesHelper {
      */
     public AssignmentAndGradeServicesCapabilities extractCapabilities(final Map<String, Object> ltiMessage) {
         return Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.AGS_CAPABILITIES))
-                .filter(settings -> settings instanceof Map)
+                .filter(Map.class::isInstance)
                 .map(Map.class::cast)
                 .map(LtiAssignmentAndGradeServicesHelper::buildFromCapabilities)
-                .orElseThrow(RuntimeException::new) // TODO: define new exception
+                .orElseThrow(() -> new LtiBadRequestException("The capabilities claim must be a Map"))
                 ;
     }
 

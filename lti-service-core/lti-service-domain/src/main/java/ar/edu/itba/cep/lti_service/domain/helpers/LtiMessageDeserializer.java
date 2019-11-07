@@ -1,5 +1,6 @@
 package ar.edu.itba.cep.lti_service.domain.helpers;
 
+import ar.edu.itba.cep.lti.LtiAuthenticationException;
 import ar.edu.itba.cep.lti_service.models.ToolDeployment;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyConverter;
@@ -29,7 +30,7 @@ public class LtiMessageDeserializer {
      * @param toolDeployment A {@link ToolDeployment} needed to validate the {@code idToken}.
      *                       Needed to retrieve the public key used to verify the message.
      * @return The parsed LTI message, in the form of a {@link Map}.
-     * @throws RuntimeException If the ... // TODO: complete
+     * @throws LtiAuthenticationException If the id token cannot be decoded.
      */
     public Map<String, Object> deserialize(final String idToken, final ToolDeployment toolDeployment)
             throws RuntimeException {
@@ -41,7 +42,7 @@ public class LtiMessageDeserializer {
                     .parseClaimsJws(idToken)
                     .getBody();
         } catch (final JwtException e) {
-            throw new RuntimeException("The id token could not be parsed", e); // TODO define new exception
+            throw new LtiAuthenticationException("The id token could not be parsed", e);
         }
     }
 

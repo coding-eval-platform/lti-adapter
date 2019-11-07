@@ -23,6 +23,7 @@ import org.springframework.web.filter.ForwardedHeaderFilter;
         "com.bellotapps.webapps_commons.data_transfer.jersey.providers",
 }, errorHandlersPackages = {
         "com.bellotapps.webapps_commons.error_handlers",
+        "ar.edu.itba.cep.lti_service.rest.controller.error_handlers",
 })
 @EnableJerseyValidation
 public class WebConfig {

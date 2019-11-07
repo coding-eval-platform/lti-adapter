@@ -6,7 +6,6 @@ import com.bellotapps.webapps_commons.exceptions.ExternalServiceException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -65,7 +64,7 @@ public class RestTemplateEvaluationsService implements EvaluationsService {
             return Optional.ofNullable(restTemplate.getForObject(uri, ExamDto.class)).map(ExamDto::toModel);
         } catch (final HttpClientErrorException.NotFound notFound) {
             return Optional.empty();
-        } catch (final RestClientException e) {
+        } catch (final Throwable e) {
             throw new ExternalServiceException(
                     "evaluations-service", "Unexpected error when communicating with the evaluations service", e
             );

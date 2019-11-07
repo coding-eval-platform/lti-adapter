@@ -1,5 +1,6 @@
 package ar.edu.itba.cep.lti_service.domain.helpers;
 
+import ar.edu.itba.cep.lti.LtiAuthenticationException;
 import io.jsonwebtoken.*;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -78,7 +79,7 @@ public abstract class AbstractJwtStateHelper<S, J extends AbstractJwtStateHelper
                     .parse(encoded, jwtHandlerSupplier.get())
                     .getBody();
         } catch (final JwtException e) {
-            throw new RuntimeException("The state could not be parsed", e); // TODO define new exception
+            throw new LtiAuthenticationException("The state could not be parsed", e);
         }
     }
 

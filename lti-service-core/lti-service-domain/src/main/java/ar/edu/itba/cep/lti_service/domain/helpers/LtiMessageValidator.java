@@ -1,5 +1,7 @@
 package ar.edu.itba.cep.lti_service.domain.helpers;
 
+import ar.edu.itba.cep.lti.LtiAuthenticationException;
+import ar.edu.itba.cep.lti.LtiBadRequestException;
 import ar.edu.itba.cep.lti_service.models.ToolDeployment;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyConverter;
@@ -63,7 +65,7 @@ public class LtiMessageValidator {
     private static void validateVersion(final Map<String, Object> ltiMessage) throws RuntimeException {
         Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.VERSION))
                 .filter(LTI_VERSION::equals)
-                .orElseThrow(RuntimeException::new) // TODO: define new exception
+                .orElseThrow(() -> new LtiBadRequestException("LTI version must be \"" + LTI_VERSION + "\""))
         ;
     }
 
@@ -83,7 +85,7 @@ public class LtiMessageValidator {
         // The issuer for the platform MUST exactly match the value of the iss (Issuer) Claim
         Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.ISSUER))
                 .filter(issuer::equals)
-                .orElseThrow(RuntimeException::new) // TODO: define new exception
+                .orElseThrow(LtiAuthenticationException::new)
         ;
     }
 
@@ -108,13 +110,13 @@ public class LtiMessageValidator {
         final var audience = Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.AUDIENCE))
                 .filter(val -> val instanceof String || val instanceof Collection)
                 .filter(val -> val instanceof String ? clientId.equals(val) : ((Collection) val).contains(clientId))
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(LtiAuthenticationException::new);
         // In case more than one element is present in the audience claim...
         // If there are multiple audiences, the azp Claim must be present and match the client id
         if (audience instanceof Collection) {
             Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.AUTHORIZED_PARTY))
-                    .filter(clientId::equals) // TODO: define new exception
-                    .orElseThrow(RuntimeException::new) // TODO: define new exception
+                    .filter(clientId::equals)
+                    .orElseThrow(LtiAuthenticationException::new)
             ;
         }
     }
@@ -132,7 +134,7 @@ public class LtiMessageValidator {
         Assert.notNull(deploymentId, "The deployment id must not be null");
         Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.DEPLOYMENT_ID))
                 .filter(deploymentId::equals)
-                .orElseThrow(RuntimeException::new) // TODO: define new exception
+                .orElseThrow(LtiAuthenticationException::new)
         ;
     }
 
@@ -154,7 +156,7 @@ public class LtiMessageValidator {
         // (note that the nonce is part of the state sent in the said request, which is then signed with a private key).
         Optional.ofNullable(ltiMessage.get(LtiConstants.LtiClaims.NONCE))
                 .filter(nonce::equals)
-                .orElseThrow(RuntimeException::new) // TODO: define new exception
+                .orElseThrow(LtiAuthenticationException::new)
         ;
     }
 

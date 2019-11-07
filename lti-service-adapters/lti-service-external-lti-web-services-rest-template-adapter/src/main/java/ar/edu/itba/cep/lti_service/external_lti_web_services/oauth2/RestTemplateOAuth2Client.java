@@ -76,9 +76,6 @@ class RestTemplateOAuth2Client implements OAuth2Client {
         Assert.notNull(toolDeployment, "The ToolDeployment must not be null");
         Assert.notEmpty(scopes, "The scopes list must not be null or empty");
         final var response = sendRequest(toolDeployment, scopes);
-        if (!scopes.equals(response.getScopes())) {
-            throw new RuntimeException("Could not obtain a token with requested scopes"); // TODO: define better exception
-        }
         return response.getAccessToken();
     }
 

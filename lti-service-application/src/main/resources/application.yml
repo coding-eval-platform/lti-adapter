@@ -26,6 +26,13 @@ spring:
             non_contextual_creation: true
     open-in-view: false
 
+  sleuth:
+    sampler:
+      probability: 1
+  zipkin:
+    sender:
+      type: web
+
 server:
   port: 8000
   error:

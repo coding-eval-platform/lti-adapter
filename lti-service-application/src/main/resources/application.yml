@@ -67,8 +67,8 @@ spring:
 
 eureka:
   client:
-    service-url:
-      default-zone: "http://localhost:8761/eureka/"
+    serviceUrl:
+      defaultZone: "http://localhost:8761/eureka/"
 
 ---
 # Configuration for Staging Environment

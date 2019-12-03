@@ -12,7 +12,7 @@
 
     <groupId>ar.edu.itba.cep</groupId>
     <artifactId>lti-service</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0-RELEASE</version>
     <name>${project.groupId}:${project.artifactId}</name>
     <packaging>pom</packaging>
 

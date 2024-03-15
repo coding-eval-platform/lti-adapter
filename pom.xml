@@ -24,7 +24,7 @@
         <org.springframework.cloud.version>Greenwich.SR2</org.springframework.cloud.version>
         <ar.edu.itba.cep.commons.version>0.0.7-RELEASE</ar.edu.itba.cep.commons.version>
         <org.apache.commons.commons-text.version>1.8</org.apache.commons.commons-text.version>
-        <com.nimbusds.nimbus-jose-jwt.version>8.1</com.nimbusds.nimbus-jose-jwt.version>
+        <com.nimbusds.nimbus-jose-jwt.version>9.37.2</com.nimbusds.nimbus-jose-jwt.version>
     </properties>
 
     <modules>
